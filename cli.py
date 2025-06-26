@@ -15,26 +15,29 @@ from src.clever_lama.constants import RESPONSE_CODE_OK
 console = Console()
 
 
-def run_command(
-    command: str, *, shell: bool = True
-) -> subprocess.CompletedProcess | None:
-    """Выполняет команду и возвращает результат."""
+def run_command_streaming(command: str, *, shell: bool = True) -> int:
+    """Выполняет команду с потоковым выводом."""
     try:
-        result = subprocess.run(
-            command, shell=shell, capture_output=True, text=True, check=False
+        process = subprocess.Popen(
+            command,
+            shell=shell,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+            universal_newlines=True
         )
 
-        if result.returncode != 0:
-            console.print(
-                f'❌ Команда завершилась с кодом {result.returncode}', style='red'
-            )
-            return None
+        # Читаем вывод построчно и выводим в консоль
+        for line in process.stdout:
+            print(line.rstrip())
 
-    except subprocess.CalledProcessError as e:
+        process.wait()
+        return process.returncode
+
+    except Exception as e:
         console.print(f'❌ Ошибка выполнения команды: {e}', style='red')
-        return None
-    else:
-        return result
+        return 1
 
 
 def check_docker() -> bool:
@@ -91,9 +94,9 @@ def start() -> None:
         sys.exit(1)
 
     console.print('🚀 Запускаем CleverLama...', style='green')
-    result = run_command('docker compose up -d')
+    returncode = run_command_streaming('docker compose up -d')
 
-    if result and result.returncode == 0:
+    if returncode == 0:
         console.print('✅ CleverLama успешно запущен', style='green')
         console.print(
             '📡 Сервис доступен по адресу: http://localhost:11434', style='blue'
@@ -110,9 +113,9 @@ def stop() -> None:
         sys.exit(1)
 
     console.print('🛑 Останавливаем CleverLama...', style='yellow')
-    result = run_command('docker compose down')
+    returncode = run_command_streaming('docker compose down')
 
-    if result and result.returncode == 0:
+    if returncode == 0:
         console.print('✅ CleverLama успешно остановлен', style='green')
     else:
         console.print('❌ Ошибка остановки CleverLama', style='red')
@@ -128,14 +131,14 @@ def restart() -> None:
     console.print('🔄 Перезапускаем CleverLama...', style='yellow')
 
     # Останавливаем
-    result = run_command('docker compose down')
-    if not result or result.returncode != 0:
+    returncode = run_command_streaming('docker compose down')
+    if returncode != 0:
         console.print('❌ Ошибка остановки CleverLama', style='red')
         sys.exit(1)
 
     # Запускаем
-    result = run_command('docker compose up -d')
-    if result and result.returncode == 0:
+    returncode = run_command_streaming('docker compose up -d')
+    if returncode == 0:
         console.print('✅ CleverLama успешно перезапущен', style='green')
         console.print(
             '📡 Сервис доступен по адресу: http://localhost:11434', style='blue'
@@ -152,10 +155,7 @@ def status() -> None:
         sys.exit(1)
 
     console.print('📊 Статус CleverLama:', style='blue')
-    result = run_command('docker compose ps')
-
-    if result:
-        console.print(result.stdout)
+    run_command_streaming('docker compose ps')
 
 
 @cli.command()
@@ -165,10 +165,7 @@ def logs() -> None:
         sys.exit(1)
 
     console.print('📝 Логи CleverLama:', style='blue')
-    result = run_command('docker compose logs -f --tail=50')
-
-    if result:
-        console.print(result.stdout)
+    run_command_streaming('docker compose logs -f --tail=50')
 
 
 @cli.command()
@@ -187,9 +184,7 @@ def tail(*, follow: bool, tail_: int) -> None:
     if follow:
         command += ' -f'
 
-    result = run_command(command)
-    if result:
-        console.print(result.stdout)
+    run_command_streaming(command)
 
 
 @cli.command()
@@ -199,9 +194,9 @@ def build() -> None:
         sys.exit(1)
 
     console.print('🔨 Пересобираем CleverLama...', style='blue')
-    result = run_command('docker compose build --no-cache')
+    returncode = run_command_streaming('docker compose build --no-cache')
 
-    if result and result.returncode == 0:
+    if returncode == 0:
         console.print('✅ CleverLama успешно пересобран', style='green')
     else:
         console.print('❌ Ошибка сборки CleverLama', style='red')
@@ -217,9 +212,10 @@ def clean() -> None:
     console.print('🧹 Очищаем Docker ресурсы...', style='yellow')
 
     # Останавливаем и удаляем контейнеры
-    result = run_command('docker compose down --rmi all --volumes --remove-orphans')
+    returncode = run_command_streaming(
+        'docker compose down --rmi all --volumes --remove-orphans')
 
-    if result and result.returncode == 0:
+    if returncode == 0:
         console.print('✅ Docker ресурсы очищены', style='green')
     else:
         console.print('❌ Ошибка очистки Docker ресурсов', style='red')
@@ -279,9 +275,9 @@ def config() -> None:
                 key, value = line.split('=', 1)
                 # Скрываем чувствительные данные
                 if (
-                    'KEY' in key.upper()
-                    or 'PASSWORD' in key.upper()
-                    or 'SECRET' in key.upper()
+                        'KEY' in key.upper()
+                        or 'PASSWORD' in key.upper()
+                        or 'SECRET' in key.upper()
                 ):
                     value = '***СКРЫТО***'
                 table.add_row(key, value)

@@ -113,9 +113,7 @@ poetry run pytest
 ### Линтинг и форматирование
 
 ```bash
-poetry run ruff check .
-poetry run ruff format .
-poetry run mypy src/
+./check.sh
 ```
 
 ## Лицензия
