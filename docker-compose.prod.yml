@@ -1,0 +1,8 @@
+# docker-compose.prod.yml
+version: '3.8'
+
+services:
+  ollama-bridge:
+    image: vlakir/ollama-openai-bridge:latest
+    # Все остальное наследуется из базового файла
+

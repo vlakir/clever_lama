@@ -1,0 +1,15 @@
+# docker-compose.dev.yml
+version: '3.8'
+
+services:
+  ollama-bridge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./main.py:/app/main.py  # Hot reload для разработки
+      - ./pyproject.toml:/app/pyproject.toml
+    environment:
+      - LOG_LEVEL=DEBUG
+    # Переопределяем restart для разработки
+    restart: "no"

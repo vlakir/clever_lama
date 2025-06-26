@@ -1,0 +1,122 @@
+[tool.poetry]
+name = "clever-lama"
+version = "0.1.0"
+description = "Мост между Ollama API и OpenAI-совместимыми провайдерами"
+authors = ["vlakir <vladimir@kirievskiy.ru>"]
+readme = "README.md"
+license = "MIT"
+homepage = "https://github.com/vlakir/clever-lama"
+repository = "https://github.com/vlakir/clever-lama"
+keywords = ["ollama", "openai", "api", "bridge", "llm"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+# Указываем где искать пакеты
+packages = [{include = "clever_lama", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.115.13"
+httpx = "^0.28.1"
+uvicorn = "^0.34.3"
+python-dotenv = "^1.0.0"
+click = "^8.1.7"
+rich = "^13.7.0"
+pydantic-settings = "^2.10.1"
+requests = "^2.32.4"
+types-requests = "^2.32.4.20250611"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+black = "^23.0.0"
+flake8 = "^6.0.0"
+ruff = "^0.12.0"
+mypy = "^1.16.1"
+
+# Скрипты - теперь правильные пути!
+[tool.poetry.scripts]
+clever-lama-manage = "clever_lama.cli:cli"
+clever-lama-dev = "clever_lama.cli:dev_alias"
+clever-lama-prod = "clever_lama.cli:prod_alias"
+clever-lama-build = "clever_lama.cli:build_alias"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+
+unsafe-fixes = true
+
+line-length = 88
+indent-width = 4
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    "business-facing/layer",
+    "migrations",
+    "draft",
+    "tests",
+]
+
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = ["S311", "D1", "D203", "D212", "INP001", "T201", "BLE001", "ERA001",
+    "ANN002", "ANN204", "RUF001", "COM812", "Q000", "PTH123", "G004", "RUF002",
+    "S603", "RUF003",]
+
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = 72
+quote-style = "single"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "single"
+
+[tool.mypy]
+explicit_package_bases = true
+ignore_missing_imports = true
+
+[pytest]
+asyncio_default_fixture_loop_scope = "function"
+
+
+[tool.black]
+line-length = 88
+
+[tool.autopep8]
+max_line_length = 88
