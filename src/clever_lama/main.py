@@ -15,6 +15,8 @@ import uvicorn
 from config import settings
 from constants import (
     API_VERSION,
+    CACHE_MODELS_KEY,
+    CACHE_MODELS_TIMESTAMP_KEY,
     DEFAULT_CONTENT_TYPE,
     DEFAULT_MODEL,
     DEFAULT_SERVER_HEADER,
@@ -28,6 +30,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from models import (
     ErrorResponse,
     HealthResponse,
+    ModelDetails,
     OllamaChatRequest,
     OllamaChatResponse,
     OllamaGenerateRequest,
@@ -41,10 +44,6 @@ from models import (
     OllamaShowResponse,
     VersionResponse,
 )
-
-# Константы
-CACHE_MODELS_KEY = 'models_cache'
-CACHE_MODELS_TIMESTAMP_KEY = 'models_cache_timestamp'
 
 # Типы
 F = TypeVar('F', bound=Callable[..., Awaitable[Any]])
@@ -330,14 +329,16 @@ def create_ollama_models_response(models: list[dict[str, Any]]) -> OllamaModelsR
             ),
             size=1000000000,  # 1GB примерный размер
             digest=f'sha256:{"0" * 64}',  # Dummy digest
-            details={
-                'parent_model': '',
-                'format': 'gguf',
-                'family': 'llama',
-                'families': ['llama'],
-                'parameter_size': '7B',
-                'quantization_level': 'Q4_0',
-            },
+            details=ModelDetails.model_validate(
+                {
+                    'parent_model': '',
+                    'format': 'gguf',
+                    'family': 'llama',
+                    'families': ['llama'],
+                    'parameter_size': '7B',
+                    'quantization_level': 'Q4_0',
+                }
+            ),
         )
         ollama_models.append(ollama_model)
 

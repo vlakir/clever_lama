@@ -21,3 +21,7 @@ HEALTH_PROBE_DELAY = 2.0
 
 # Error Messages
 SERVER_ERROR_MESSAGE = 'Внутренняя ошибка сервера'
+
+# Cache Constants
+CACHE_MODELS_KEY = 'models_cache'
+CACHE_MODELS_TIMESTAMP_KEY = 'models_cache_timestamp'
