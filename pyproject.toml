@@ -7,7 +7,7 @@ readme = "README.md"
 license = "MIT"
 homepage = "https://github.com/vlakir/clever-lama"
 repository = "https://github.com/vlakir/clever-lama"
-keywords = ["ollama", "openai", "api", "bridge", "llm"]
+keywords = ["ollama", "openai", "api", "bridge", "cleverlama", "llm"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",

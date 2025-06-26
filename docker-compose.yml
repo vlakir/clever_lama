@@ -1,10 +1,9 @@
 # docker-compose.yml
-version: '3.8'
 
 services:
-  ollama-bridge:
+  clever-lama:
     build: .
-    container_name: clever-lama-bridge
+    container_name: clever-lama
     ports:
       - "11434:11434"
     environment:

@@ -1,8 +1,7 @@
 # docker-compose.dev.yml
-version: '3.8'
 
 services:
-  ollama-bridge:
+  clever-lama:
     build:
       context: .
       dockerfile: Dockerfile
