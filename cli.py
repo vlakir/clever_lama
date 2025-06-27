@@ -25,19 +25,21 @@ def run_command_streaming(command: str, *, shell: bool = True) -> int:
             stderr=subprocess.STDOUT,
             text=True,
             bufsize=1,
-            universal_newlines=True
+            universal_newlines=True,
         )
 
-        # Читаем вывод построчно и выводим в консоль
-        for line in process.stdout:
-            print(line.rstrip())
+        if process.stdout is not None:
+            # Читаем вывод построчно и выводим в консоль
+            for line in process.stdout:
+                print(line.rstrip())
 
         process.wait()
-        return process.returncode
 
     except Exception as e:
         console.print(f'❌ Ошибка выполнения команды: {e}', style='red')
         return 1
+    else:
+        return process.returncode
 
 
 def check_docker() -> bool:
@@ -213,7 +215,8 @@ def clean() -> None:
 
     # Останавливаем и удаляем контейнеры
     returncode = run_command_streaming(
-        'docker compose down --rmi all --volumes --remove-orphans')
+        'docker compose down --rmi all --volumes --remove-orphans'
+    )
 
     if returncode == 0:
         console.print('✅ Docker ресурсы очищены', style='green')
@@ -275,9 +278,9 @@ def config() -> None:
                 key, value = line.split('=', 1)
                 # Скрываем чувствительные данные
                 if (
-                        'KEY' in key.upper()
-                        or 'PASSWORD' in key.upper()
-                        or 'SECRET' in key.upper()
+                    'KEY' in key.upper()
+                    or 'PASSWORD' in key.upper()
+                    or 'SECRET' in key.upper()
                 ):
                     value = '***СКРЫТО***'
                 table.add_row(key, value)

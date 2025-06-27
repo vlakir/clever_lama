@@ -31,13 +31,11 @@ class OllamaOptions(BaseModel):
     top_p: float | None = Field(
         None, ge=0.0, le=1.0, description='Top-p for generation'
     )
-    max_tokens: int | None = Field(
-        None, ge=1, le=4096, description='Maximum tokens to generate'
-    )
+    max_tokens: int | None = Field(None, ge=1, description='Maximum tokens to generate')
     num_predict: int | None = Field(
-        None, ge=1, le=4096, description='Number of tokens to predict'
+        None, ge=1, description='Number of tokens to predict'
     )
-    num_ctx: int | None = Field(None, ge=1, le=8192, description='Context window size')
+    num_ctx: int | None = Field(None, ge=1, description='Context window size')
 
 
 class OllamaGenerateRequest(BaseModel):
@@ -79,7 +77,7 @@ class OllamaPullRequest(BaseModel):
     )
 
 
-class ModelDetails(BaseModel):
+class OllamaModelDetails(BaseModel):
     """Model details for Ollama responses."""
 
     parent_model: str = Field('', description='Parent model')
@@ -98,7 +96,7 @@ class OllamaModel(BaseModel):
     modified_at: str = Field(description='Last modified timestamp')
     size: int = Field(description='Model size in bytes')
     digest: str = Field(description='Model digest')
-    details: ModelDetails = Field(description='Model details')
+    details: OllamaModelDetails = Field(description='Model details')
 
 
 class OllamaModelsResponse(BaseModel):
@@ -114,7 +112,7 @@ class OllamaShowResponse(BaseModel):
     modelfile: str = Field(description='Model file content')
     parameters: str = Field(description='Model parameters')
     template: str = Field(description='Model template')
-    details: ModelDetails = Field(description='Model details')
+    details: OllamaModelDetails = Field(description='Model details')
 
 
 class OllamaGenerateResponse(BaseModel):
@@ -156,7 +154,7 @@ class OllamaPullResponse(BaseModel):
     completed: int | None = Field(None, description='Completed size')
 
 
-class HealthResponse(BaseModel):
+class OllamaHealthResponse(BaseModel):
     """Response model for health check."""
 
     message: str = Field('Ollama is running', description='Health message')
@@ -164,13 +162,13 @@ class HealthResponse(BaseModel):
     version: str = Field('0.1.46', description='API version')
 
 
-class VersionResponse(BaseModel):
+class OllamaVersionResponse(BaseModel):
     """Response model for version endpoint."""
 
     version: str = Field('0.1.46', description='API version')
 
 
-class ErrorResponse(BaseModel):
+class OllamaErrorResponse(BaseModel):
     """Error response model."""
 
     detail: str = Field(description='Error detail')

@@ -7,7 +7,7 @@ RESPONSE_CODE_OK = 200
 
 # API Configuration
 API_VERSION = '0.1.46'
-DEFAULT_MODEL = 'gpt-3.5-turbo'
+DEFAULT_MODEL = 'clever_lama_stub'
 
 # HTTP Headers
 DEFAULT_SERVER_HEADER = 'Ollama/0.1.46'
