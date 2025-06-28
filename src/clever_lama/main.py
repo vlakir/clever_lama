@@ -13,7 +13,7 @@ from config import settings
 from constants import (
     DEFAULT_CONTENT_TYPE,
     DEFAULT_SERVER_HEADER,
-    HEALTH_PROBE_DELAY,
+    HEALTH_PROBE_DELAY, RESPONSE_PREFIX,
 )
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
@@ -102,7 +102,7 @@ async def validation_exception_handler(
     return JSONResponse(
         status_code=422,
         content={
-            'detail': 'Ошибка валидации данных',
+            'detail': f' {RESPONSE_PREFIX} Ошибка валидации данных',
             'errors': exc.errors(),
         },
     )
@@ -144,6 +144,7 @@ if __name__ == '__main__':
         'main:app',
         host=settings.host,
         port=settings.port,
-        log_level=settings.log_level.lower(),
-        access_log=True,
+        log_level='warning',
+        access_log=False,
     )
+

@@ -4,6 +4,7 @@
 HTTP_OK = 200
 HTTP_SERVER_ERROR = 500
 RESPONSE_CODE_OK = 200
+HTTP_BAD_GATEWAY_ERROR = 502
 
 # API Configuration
 API_VERSION = '0.1.46'
@@ -25,3 +26,5 @@ SERVER_ERROR_MESSAGE = 'Внутренняя ошибка сервера'
 # Cache Constants
 CACHE_MODELS_KEY = 'models_cache'
 CACHE_MODELS_TIMESTAMP_KEY = 'models_cache_timestamp'
+
+RESPONSE_PREFIX = '\U0001F999'

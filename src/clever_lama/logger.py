@@ -6,7 +6,7 @@ from config import settings
 
 
 class ColoredFormatter(logging.Formatter):
-    """Цветной форматтер для логов."""
+    """Цветной форматтер для логов без traceback."""
 
     # ANSI escape коды для цветов
     COLORS = MappingProxyType(
@@ -21,6 +21,11 @@ class ColoredFormatter(logging.Formatter):
     )
 
     def format(self, record: logging.LogRecord) -> str:
+        # Всегда подавляем traceback
+        record.exc_info = None
+        record.exc_text = None
+        record.stack_info = None
+
         # Получаем исходное сообщение
         log_message = super().format(record)
 
@@ -33,7 +38,7 @@ class ColoredFormatter(logging.Formatter):
 
 # Настройка логирования с цветным форматтером
 def setup_logging() -> None:
-    """Настраивает логирование с цветным выводом."""
+    """Настраивает логирование с цветным выводом без traceback."""
     # Создаем форматтер
     formatter = ColoredFormatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 

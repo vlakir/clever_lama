@@ -1,5 +1,6 @@
 import time
 
+from config import settings
 from constants import (
     API_VERSION,
 )
@@ -49,7 +50,7 @@ async def list_models() -> OllamaModelsResponse:
         return service.create_ollama_models_response(models)
     except Exception as e:
         logger.error(f'Ошибка при получении моделей: {e}')
-        raise
+        service.raise_bad_gateway_error(e, settings.api_base_url)
 
 
 @ollama_router.post('/show')
@@ -150,4 +151,4 @@ async def chat_with_model(request: OllamaChatRequest) -> OllamaChatResponse:
         )
     except Exception as e:
         logger.error(f'Ошибка в chat_with_model: {e!s}', exc_info=True)
-        raise
+        service.raise_bad_gateway_error(e, settings.api_base_url)

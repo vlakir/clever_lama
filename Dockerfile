@@ -1,49 +1,40 @@
 # Dockerfile
-FROM python:3.13.3-slim
+ARG PYTHON_VERSION=3.13-slim
+FROM python:${PYTHON_VERSION} as builder
 
-# Создаем пользователя для безопасности
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-
-# Устанавливаем системные зависимости
-RUN apt-get update && apt-get install -y \
+# 1. Установка зависимостей с очисткой кеша в одном слое
+RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Устанавливаем Poetry
-RUN pip install poetry
+# 2. Установка Poetry официальным методом
+ENV POETRY_VERSION=1.8.2
+RUN curl -sSL https://install.python-poetry.org | python - && \
+    mv /root/.local/bin/poetry /usr/local/bin/
 
-# Настройки Poetry - НЕ создаем виртуальное окружение!
+# 3. Оптимизированные настройки Poetry
 ENV POETRY_NO_INTERACTION=1 \
-    POETRY_VENV_IN_PROJECT=0 \
     POETRY_VIRTUALENVS_CREATE=false \
     POETRY_CACHE_DIR=/tmp/poetry_cache \
-    PYTHONPATH=/app/src
+    PIP_NO_CACHE_DIR=off
 
-# Создаем рабочую директорию
 WORKDIR /app
+COPY pyproject.toml poetry.lock* README.md ./
 
-# Копируем файлы Poetry
-COPY pyproject.toml poetry.lock* ./
+# 4. Установка зависимостей без корневого доступа
+RUN poetry install --only=main --no-root && \
+    rm -rf "$POETRY_CACHE_DIR"
 
-# Копируем README.md чтобы Poetry не ругался
-COPY README.md ./
+# 5. Финальный образ
+FROM python:${PYTHON_VERSION}
+RUN groupadd -r appuser && useradd --no-log-init -r -g appuser appuser
 
-# Устанавливаем зависимости через Poetry (БЕЗ pip!)
-RUN poetry install --only=main --no-root && rm -rf $POETRY_CACHE_DIR
-
-# Копируем исходный код
+WORKDIR /app
+COPY --from=builder /usr/local/lib/python3.13/site-packages/ /usr/local/lib/python3.13/site-packages/
 COPY src/ ./src/
 
-# Меняем владельца файлов
-RUN chown -R appuser:appuser /app
 USER appuser
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:11434/ || exit 1
-
-# Открываем порт
 EXPOSE 11434
-
-# Запуск через Python с правильным путем
+HEALTHCHECK --interval=30s --timeout=10s \
+    CMD curl -f http://localhost:11434/ || exit 1
 CMD ["python", "src/clever_lama/main.py"]

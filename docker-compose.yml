@@ -3,11 +3,12 @@
 services:
   clever-lama:
     build: .
+    image: clever_lama
     container_name: clever-lama
     ports:
       - "11434:11434"
     environment:
-      - API_BASE_URL=${API_BASE_URL:-https://api.aitunnel.ru/v1}
+      - API_BASE_URL=${API_BASE_URL}
       - API_KEY=${API_KEY}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - CACHE_DURATION_MINUTES=${CACHE_DURATION_MINUTES:-10}

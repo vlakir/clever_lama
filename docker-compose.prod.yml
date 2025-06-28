@@ -1,7 +1,0 @@
-# docker-compose.prod.yml
-
-services:
-  clever-lama:
-    image: vlakir/clever-lama:latest
-    # Все остальное наследуется из базового файла
-

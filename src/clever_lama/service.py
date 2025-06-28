@@ -10,7 +10,7 @@ from constants import (
     CACHE_MODELS_TIMESTAMP_KEY,
     DEFAULT_MODEL,
     HTTP_OK,
-    HTTP_SERVER_ERROR,
+    HTTP_BAD_GATEWAY_ERROR, RESPONSE_PREFIX,
 )
 from fastapi import HTTPException
 from logger import logger
@@ -43,7 +43,8 @@ class OpenAIService:
         """Проверяет доступность внешнего API."""
         if not client_holder.client:
             msg = 'HTTP клиент не инициализирован'
-            raise RuntimeError(msg)
+            self.raise_bad_gateway_error(Exception(msg),
+                                         str(client_holder.client.base_url))
 
         try:
             response = await client_holder.client.get('/models')
@@ -51,8 +52,8 @@ class OpenAIService:
                 logger.info('✅ Внешний API доступен')
             else:
                 logger.warning(f'⚠️ Внешний API вернул статус {response.status_code}')
-        except Exception:
-            logger.error('❌ Внешний API недоступен')
+        except Exception as e:
+            logger.error(f'❌ Внешний API {client_holder.client.base_url} недоступен')
 
     def is_cache_valid(self) -> bool:
         """Проверяет актуальность кэша моделей."""
@@ -71,7 +72,8 @@ class OpenAIService:
         """Получает список моделей из внешнего API."""
         if not client_holder.client:
             msg = 'HTTP клиент не инициализирован'
-            raise RuntimeError(msg)
+            self.raise_bad_gateway_error(Exception(msg),
+                                         str(client_holder.client.base_url))
 
         try:
             response = await client_holder.client.get('/models')
@@ -92,19 +94,12 @@ class OpenAIService:
                         }
                     )
 
-        except Exception:
-            logger.exception('Ошибка получения моделей из API')
-            # Возвращаем модель по умолчанию
-            models = [
-                {
-                    'id': DEFAULT_MODEL,
-                    'object': 'model',
-                    'created': str(int(time.time())),
-                    'owned_by': 'clever_lama',
-                }
-            ]
+        except Exception as e:
+            logger.error('Ошибка получения моделей из API')
+            self.raise_bad_gateway_error(e, str(client_holder.client.base_url))
 
-        return models
+        else:
+            return models
 
     async def get_cached_models(self) -> list[dict[str, Any]]:
         """Получает модели из кэша или загружает их."""
@@ -196,7 +191,7 @@ class OpenAIService:
         """Вызывает OpenAI API для генерации ответа."""
         if not client_holder.client:
             msg = 'HTTP клиент не инициализирован'
-            raise RuntimeError(msg)
+            self.raise_bad_gateway_error(Exception(msg), str(client_holder.client.base_url))
 
         try:
             payload = {
@@ -210,30 +205,11 @@ class OpenAIService:
             )
             response.raise_for_status()
 
-            return response.json()
-
-        except httpx.HTTPStatusError as e:
-            error_detail = f'OpenAI API error: {e.response.status_code}'
-            try:
-                error_data = e.response.json()
-                if 'error' in error_data:
-                    error_detail = (
-                        f'OpenAI API error: '
-                        f'{error_data["error"].get("message", str(e))}'
-                    )
-            except Exception:
-                logger.exception('Ошибка при обработке ответа об ошибке API')
-
-            raise HTTPException(
-                status_code=e.response.status_code, detail=error_detail
-            ) from e
-
         except Exception as e:
-            logger.exception('Ошибка вызова OpenAI API')
-            raise HTTPException(
-                status_code=HTTP_SERVER_ERROR,
-                detail=f'Ошибка подключения к OpenAI API: {e}',
-            ) from e
+            self.raise_bad_gateway_error(e, str(client_holder.client.base_url))
+
+        else:
+            return response.json()
 
     async def call_openai_api_stream(
         self, messages: list[dict[str, str]], model: str
@@ -241,7 +217,7 @@ class OpenAIService:
         """Вызывает OpenAI API для потоковой генерации ответа."""
         if not client_holder.client:
             msg = 'HTTP клиент не инициализирован'
-            raise RuntimeError(msg)
+            self.raise_bad_gateway_error(Exception(msg), str(client_holder.client.base_url))
 
         try:
             payload = {
@@ -255,45 +231,29 @@ class OpenAIService:
             ) as response:
                 response.raise_for_status()
 
+                logo_sent = False
+
                 async for line in response.aiter_lines():
                     clear_line = line.strip()
                     if clear_line:
-                        # Убираем префикс "data: " если он есть
                         clear_line = clear_line.removeprefix('data: ')
 
-                        # Проверяем на окончание потока
                         if clear_line == '[DONE]':
                             break
 
                         try:
                             chunk_data = json.loads(clear_line)
+
+                            if not logo_sent:
+                                logo_sent = self._add_greeting_to_chank(chunk_data)
+
                             yield chunk_data
                         except json.JSONDecodeError:
                             logger.warning(f'Не удалось парсить JSON: {clear_line}')
                             continue
 
-        except httpx.HTTPStatusError as e:
-            error_detail = f'OpenAI API error: {e.response.status_code}'
-            try:
-                error_data = e.response.json()
-                if 'error' in error_data:
-                    error_detail = (
-                        f'OpenAI API error: '
-                        f'{error_data["error"].get("message", str(e))}'
-                    )
-            except Exception:
-                logger.exception('Ошибка при обработке ответа об ошибке API')
-
-            raise HTTPException(
-                status_code=e.response.status_code, detail=error_detail
-            ) from e
-
         except Exception as e:
-            logger.exception('Ошибка вызова OpenAI API stream')
-            raise HTTPException(
-                status_code=HTTP_SERVER_ERROR,
-                detail=f'Ошибка подключения к OpenAI API: {e}',
-            ) from e
+            self.raise_bad_gateway_error(e, str(client_holder.client.base_url))
 
     async def stream_chat_response(
         self, messages: list[dict[str, str]], model: str
@@ -307,7 +267,7 @@ class OpenAIService:
         try:
             async for chunk in self.call_openai_api_stream(messages, model):
                 # Извлекаем контент из chunk'а OpenAI
-                delta_content = self.extract_delta_content(chunk)
+                delta_content = self._extract_delta_content(chunk)
 
                 if delta_content:
                     accumulated_content += delta_content
@@ -348,7 +308,7 @@ class OpenAIService:
             }
             yield json.dumps(error_chunk, ensure_ascii=False) + '\n'
 
-    def extract_delta_content(self, chunk: dict[str, Any]) -> str:
+    def _extract_delta_content(self, chunk: dict[str, Any]) -> str:
         """Извлекает контент из delta chunk'а OpenAI."""
         try:
             choices = chunk.get('choices', [])
@@ -364,3 +324,32 @@ class OpenAIService:
             pass
 
         return ''
+
+    def raise_bad_gateway_error(self, exception: Exception, gateway_url: str,
+    add_new_line=False):
+        logger.error('Ошибка вызова OpenAI')
+
+        prefix = RESPONSE_PREFIX + ' \n\n' if add_new_line else RESPONSE_PREFIX
+        raise HTTPException(
+            status_code=HTTP_BAD_GATEWAY_ERROR,
+            detail=f'{prefix} Ошибка подключения к OpenAI API по адресу '
+                   f'{gateway_url}. Проверьте правильность '
+                   f'адреса или наличие стабильного интернет-подключения.',
+        ) from exception
+
+    def _add_greeting_to_chank(self, chunk: dict, add_new_line=True) -> bool:
+        try:
+            content = chunk['choices'][0]['delta'][
+                'content'] if chunk else None
+
+            if content and (len(content) > 0):
+                prefix = RESPONSE_PREFIX + ' \n\n' if add_new_line else RESPONSE_PREFIX + ' '
+
+                chunk['choices'][0]['delta']['content'] = prefix + content
+            else:
+                return False
+
+        except (KeyError, IndexError, TypeError):
+            return False
+        else:
+            return True

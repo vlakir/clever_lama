@@ -18,3 +18,4 @@ copy_to_remote.sh
 log/
 .secrets.toml
 big_image_*.*
+vanilla_docker.sh

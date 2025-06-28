@@ -4,9 +4,9 @@ from typing import Any
 
 from fastapi import HTTPException
 
-from src.clever_lama.constants import HTTP_SERVER_ERROR, SERVER_ERROR_MESSAGE
-from src.clever_lama.logger import logger
-from src.clever_lama.models import OllamaErrorResponse
+from constants import HTTP_SERVER_ERROR, SERVER_ERROR_MESSAGE
+from logger import logger
+from models import OllamaErrorResponse
 
 
 def error_handler[F: Callable[..., Awaitable[Any]]](func: F) -> F:
