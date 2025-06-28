@@ -1,10 +1,14 @@
 import time
+from collections.abc import Awaitable, Callable
+from functools import wraps
+from typing import Annotated, Any
 
 from config import settings
 from constants import (
     API_VERSION,
+    HTTP_BAD_GATEWAY_ERROR,
 )
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from logger import logger
 from models import (
@@ -22,14 +26,33 @@ from models import (
     OllamaVersionResponse,
 )
 from service import OpenAIService
-from utils import error_handler
-
-service = OpenAIService()
 
 ollama_router = APIRouter(
     prefix='/api',
     tags=['ollama'],
 )
+
+
+OpenAIServiceDep = Annotated[OpenAIService, Depends(OpenAIService)]
+
+
+def error_handler[F: Callable[..., Awaitable[Any]]](func: F) -> F:
+    """Декоратор для обработки ошибок в endpoint'ах."""
+
+    @wraps(func)
+    async def wrapper(*args: object, **kwargs: object) -> object:
+        try:
+            return await func(*args, **kwargs)
+        except HTTPException:
+            # Перебрасываем HTTPException как есть
+            raise
+        except Exception as e:
+            logger.exception('Неожиданная ошибка в endpoint')
+            raise HTTPException(
+                status_code=HTTP_BAD_GATEWAY_ERROR, detail=str(e)
+            ) from e
+
+    return wrapper  # type: ignore[return-value]
 
 
 @ollama_router.get('/version')
@@ -41,16 +64,14 @@ async def get_version() -> OllamaVersionResponse:
 
 @ollama_router.get('/tags')
 @error_handler
-async def list_models() -> OllamaModelsResponse:
+async def list_models(service: OpenAIServiceDep) -> OllamaModelsResponse | None:
     """Возвращает список доступных моделей."""
     logger.info('Получен запрос к /api/tags')
-    try:
-        models = await service.get_cached_models()
-        logger.info(f'Получено {len(models) if models else 0} моделей')
-        return service.create_ollama_models_response(models)
-    except Exception as e:
-        logger.error(f'Ошибка при получении моделей: {e}')
-        service.raise_bad_gateway_error(e, settings.api_base_url)
+
+    models = await service.get_models_from_api()
+    logger.info(f'Получено {len(models) if models else 0} моделей')
+
+    return service.create_ollama_models_response(models)
 
 
 @ollama_router.post('/show')
@@ -86,7 +107,9 @@ async def pull_model(request: OllamaPullRequest) -> OllamaPullResponse:
 
 @ollama_router.post('/generate')
 @error_handler
-async def generate_text(request: OllamaGenerateRequest) -> OllamaGenerateResponse:
+async def generate_text(
+    request: OllamaGenerateRequest, service: OpenAIServiceDep
+) -> OllamaGenerateResponse:
     """Генерирует текст используя внешний API."""
     messages = [{'role': 'user', 'content': request.prompt}]
 
@@ -113,7 +136,9 @@ async def generate_text(request: OllamaGenerateRequest) -> OllamaGenerateRespons
 
 @ollama_router.post('/chat', response_model=None)
 @error_handler
-async def chat_with_model(request: OllamaChatRequest) -> OllamaChatResponse:
+async def chat_with_model(
+    request: OllamaChatRequest, service: OpenAIServiceDep
+) -> OllamaChatResponse | StreamingResponse | None:
     """Чат с моделью используя внешний API."""
     # Добавляем детальное логирование
     logger.info(
@@ -151,4 +176,6 @@ async def chat_with_model(request: OllamaChatRequest) -> OllamaChatResponse:
         )
     except Exception as e:
         logger.error(f'Ошибка в chat_with_model: {e!s}', exc_info=True)
-        service.raise_bad_gateway_error(e, settings.api_base_url)
+        service.raise_connection_error(e, settings.api_base_url)
+        # noinspection PyUnreachableCode
+        return None

@@ -172,4 +172,4 @@ class OllamaErrorResponse(BaseModel):
     """Error response model."""
 
     detail: str = Field(description='Error detail')
-    error_code: str | None = Field(None, description='Error code')
+    error_code: int | None = Field(None, description='Error code')

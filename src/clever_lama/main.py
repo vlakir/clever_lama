@@ -13,8 +13,10 @@ from config import settings
 from constants import (
     DEFAULT_CONTENT_TYPE,
     DEFAULT_SERVER_HEADER,
-    HEALTH_PROBE_DELAY, RESPONSE_PREFIX,
+    HEALTH_PROBE_DELAY,
+    RESPONSE_PREFIX,
 )
+from endpoints import ollama_router
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,7 +25,6 @@ from logger import logger
 from models import (
     OllamaHealthResponse,
 )
-from router import ollama_router
 from service import OpenAIService, client_holder
 
 F = TypeVar('F', bound=Callable[..., Awaitable[Any]])
@@ -144,7 +145,6 @@ if __name__ == '__main__':
         'main:app',
         host=settings.host,
         port=settings.port,
-        log_level='warning',
-        access_log=False,
+        log_level='info',
+        access_log=True,
     )
-

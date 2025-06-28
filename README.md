@@ -77,7 +77,6 @@ poetry run python src/clever_lama/main.py
 - `API_KEY` - ключ API для провайдера (обязательно)
 - `API_BASE_URL` - базовый URL API провайдера (по умолчанию: https://api.aitunnel.ru/v1)
 - `LOG_LEVEL` - уровень логирования (по умолчанию: INFO)
-- `CACHE_DURATION_MINUTES` - время кеширования в минутах (по умолчанию: 10)
 - `HOST` - хост для привязки (по умолчанию: 0.0.0.0)
 - `PORT` - порт для привязки (по умолчанию: 11434)
 

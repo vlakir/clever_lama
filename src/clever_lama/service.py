@@ -1,18 +1,14 @@
 import json
 import time
 from collections.abc import AsyncGenerator
-from typing import Any
+from typing import TYPE_CHECKING, Any, Never
 
-import httpx
 from config import settings
 from constants import (
-    CACHE_MODELS_KEY,
-    CACHE_MODELS_TIMESTAMP_KEY,
     DEFAULT_MODEL,
     HTTP_OK,
-    HTTP_BAD_GATEWAY_ERROR, RESPONSE_PREFIX,
+    RESPONSE_PREFIX,
 )
-from fastapi import HTTPException
 from logger import logger
 from models import (
     OllamaMessage,
@@ -21,8 +17,8 @@ from models import (
     OllamaModelsResponse,
 )
 
-# Кэш для моделей
-cache: dict[str, Any] = {}
+if TYPE_CHECKING:
+    import httpx
 
 
 # HTTP клиент holder
@@ -35,6 +31,22 @@ class HTTPClientHolder:
 
 client_holder = HTTPClientHolder()
 
+fake_model = OllamaModel(
+    name='fake_model',
+    model='fake_model',
+    modified_at='2024-03-15T14:30:25.123456789Z',
+    size=3825819648,
+    digest='sha256:4f4c8b3e5d9a2f1b8c7e6d5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c',
+    details=OllamaModelDetails(
+        parent_model='llama2',
+        format='gguf',
+        family='llama',
+        families=['llama', 'chat'],
+        parameter_size='7B',
+        quantization_level='Q4_0',
+    ),
+)
+
 
 class OpenAIService:
     def __init__(self): ...
@@ -43,8 +55,7 @@ class OpenAIService:
         """Проверяет доступность внешнего API."""
         if not client_holder.client:
             msg = 'HTTP клиент не инициализирован'
-            self.raise_bad_gateway_error(Exception(msg),
-                                         str(client_holder.client.base_url))
+            self.raise_connection_error(Exception(msg), settings.api_base_url)
 
         try:
             response = await client_holder.client.get('/models')
@@ -52,66 +63,34 @@ class OpenAIService:
                 logger.info('✅ Внешний API доступен')
             else:
                 logger.warning(f'⚠️ Внешний API вернул статус {response.status_code}')
-        except Exception as e:
-            logger.error(f'❌ Внешний API {client_holder.client.base_url} недоступен')
-
-    def is_cache_valid(self) -> bool:
-        """Проверяет актуальность кэша моделей."""
-        if CACHE_MODELS_TIMESTAMP_KEY not in cache:
-            return False
-
-        timestamp = cache[CACHE_MODELS_TIMESTAMP_KEY]
-        if not isinstance(timestamp, (int, float)):
-            return False
-
-        current_time = time.time()
-        cache_age_minutes = (current_time - timestamp) / 60
-        return cache_age_minutes < settings.cache_duration_minutes
+        except Exception:
+            logger.error(f'❌ Внешний API {settings.api_base_url} недоступен')
 
     async def get_models_from_api(self) -> list[dict[str, Any]]:
         """Получает список моделей из внешнего API."""
-        if not client_holder.client:
-            msg = 'HTTP клиент не инициализирован'
-            self.raise_bad_gateway_error(Exception(msg),
-                                         str(client_holder.client.base_url))
+        models = []
 
         try:
-            response = await client_holder.client.get('/models')
-            response.raise_for_status()
+            if client_holder.client is not None:
+                response = await client_holder.client.get('/models')
+                response.raise_for_status()
 
-            data = response.json()
-            models = []
+                data = response.json()
 
-            if 'data' in data:
-                for model in data['data']:
-                    model_id = model.get('id', DEFAULT_MODEL)
-                    models.append(
-                        {
-                            'id': model_id,
-                            'object': 'model',
-                            'created': str(int(time.time())),
-                            'owned_by': 'aitunnel',
-                        }
-                    )
+                if 'data' in data:
+                    for model in data['data']:
+                        model_id = model.get('id', DEFAULT_MODEL)
+                        models.append(
+                            {
+                                'id': model_id,
+                                'object': 'model',
+                                'created': str(int(time.time())),
+                                'owned_by': 'aitunnel',
+                            }
+                        )
 
-        except Exception as e:
+        except Exception:
             logger.error('Ошибка получения моделей из API')
-            self.raise_bad_gateway_error(e, str(client_holder.client.base_url))
-
-        else:
-            return models
-
-    async def get_cached_models(self) -> list[dict[str, Any]]:
-        """Получает модели из кэша или загружает их."""
-        if self.is_cache_valid() and CACHE_MODELS_KEY in cache:
-            models = cache[CACHE_MODELS_KEY]
-            if isinstance(models, list):
-                return models
-
-        # Загружаем модели из API
-        models = await self.get_models_from_api()
-        cache[CACHE_MODELS_KEY] = models
-        cache[CACHE_MODELS_TIMESTAMP_KEY] = time.time()
 
         return models
 
@@ -120,6 +99,10 @@ class OpenAIService:
     ) -> OllamaModelsResponse:
         """Создает ответ в формате Ollama из списка моделей."""
         ollama_models = []
+
+        if len(models) == 0:
+            ollama_models.append(fake_model)
+            logger.warning('Не удалось получить модели. Добавлена фейковая модель.')
 
         for model in models:
             model_id = model.get('id', DEFAULT_MODEL)
@@ -191,7 +174,7 @@ class OpenAIService:
         """Вызывает OpenAI API для генерации ответа."""
         if not client_holder.client:
             msg = 'HTTP клиент не инициализирован'
-            self.raise_bad_gateway_error(Exception(msg), str(client_holder.client.base_url))
+            self.raise_connection_error(Exception(msg), settings.api_base_url)
 
         try:
             payload = {
@@ -206,7 +189,7 @@ class OpenAIService:
             response.raise_for_status()
 
         except Exception as e:
-            self.raise_bad_gateway_error(e, str(client_holder.client.base_url))
+            self.raise_connection_error(e, settings.api_base_url)
 
         else:
             return response.json()
@@ -217,7 +200,7 @@ class OpenAIService:
         """Вызывает OpenAI API для потоковой генерации ответа."""
         if not client_holder.client:
             msg = 'HTTP клиент не инициализирован'
-            self.raise_bad_gateway_error(Exception(msg), str(client_holder.client.base_url))
+            self.raise_connection_error(Exception(msg), settings.api_base_url)
 
         try:
             payload = {
@@ -253,7 +236,7 @@ class OpenAIService:
                             continue
 
         except Exception as e:
-            self.raise_bad_gateway_error(e, str(client_holder.client.base_url))
+            self.raise_connection_error(e, str(client_holder.client.base_url))
 
     async def stream_chat_response(
         self, messages: list[dict[str, str]], model: str
@@ -303,7 +286,7 @@ class OpenAIService:
             error_chunk = {
                 'model': model,
                 'created_at': created_at,
-                'message': {'role': 'assistant', 'content': f'Ошибка: {e!s}'},
+                'message': {'role': 'assistant', 'content': f'{e!s}'},
                 'done': True,
             }
             yield json.dumps(error_chunk, ensure_ascii=False) + '\n'
@@ -325,25 +308,29 @@ class OpenAIService:
 
         return ''
 
-    def raise_bad_gateway_error(self, exception: Exception, gateway_url: str,
-    add_new_line=False):
+    def raise_connection_error(
+        self, exception: Exception, gateway_url: str, *, add_new_line: bool = False
+    ) -> Never:
         logger.error('Ошибка вызова OpenAI')
 
         prefix = RESPONSE_PREFIX + ' \n\n' if add_new_line else RESPONSE_PREFIX
-        raise HTTPException(
-            status_code=HTTP_BAD_GATEWAY_ERROR,
-            detail=f'{prefix} Ошибка подключения к OpenAI API по адресу '
-                   f'{gateway_url}. Проверьте правильность '
-                   f'адреса или наличие стабильного интернет-подключения.',
-        ) from exception
 
-    def _add_greeting_to_chank(self, chunk: dict, add_new_line=True) -> bool:
+        msg = (
+            f'{prefix} Ошибка подключения к OpenAI API по '
+            f'адресу {gateway_url}. Проверьте правильность '
+            f'адреса или наличие стабильного '
+            f'интернет-подключения.'
+        )
+        raise ConnectionAbortedError(msg) from exception
+
+    def _add_greeting_to_chank(self, chunk: dict, *, add_new_line: bool = True) -> bool:
         try:
-            content = chunk['choices'][0]['delta'][
-                'content'] if chunk else None
+            content = chunk['choices'][0]['delta']['content'] if chunk else None
 
             if content and (len(content) > 0):
-                prefix = RESPONSE_PREFIX + ' \n\n' if add_new_line else RESPONSE_PREFIX + ' '
+                prefix = (
+                    RESPONSE_PREFIX + ' \n\n' if add_new_line else RESPONSE_PREFIX + ' '
+                )
 
                 chunk['choices'][0]['delta']['content'] = prefix + content
             else:

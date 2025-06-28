@@ -20,11 +20,4 @@ DEFAULT_MODEL_SIZE = 5_000_000_000
 # Timing Configuration (in seconds)
 HEALTH_PROBE_DELAY = 2.0
 
-# Error Messages
-SERVER_ERROR_MESSAGE = 'Внутренняя ошибка сервера'
-
-# Cache Constants
-CACHE_MODELS_KEY = 'models_cache'
-CACHE_MODELS_TIMESTAMP_KEY = 'models_cache_timestamp'
-
-RESPONSE_PREFIX = '\U0001F999'
+RESPONSE_PREFIX = '\U0001f999'
