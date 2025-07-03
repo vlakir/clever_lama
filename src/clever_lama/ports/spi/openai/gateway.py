@@ -3,9 +3,9 @@ import time
 from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING, Any, Never
 
-from config import settings
-from constants import DEFAULT_MODEL, HTTP_OK, RESPONSE_PREFIX
-from logger import logger
+from clever_lama.config import settings
+from clever_lama.constants import DEFAULT_MODEL, HTTP_OK, RESPONSE_PREFIX
+from clever_lama.logger import logger
 
 if TYPE_CHECKING:
     import httpx

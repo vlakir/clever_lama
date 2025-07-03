@@ -1,7 +1,13 @@
 from typing import Annotated
 
-from models.ollama import OllamaMessage, OllamaModel, OllamaModelDetails, OllamaOptions
 from pydantic import BaseModel, Field
+
+from clever_lama.models.ollama import (
+    OllamaMessage,
+    OllamaModel,
+    OllamaModelDetails,
+    OllamaOptions,
+)
 
 
 class OllamaGenerateRequest(BaseModel):

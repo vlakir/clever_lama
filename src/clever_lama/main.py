@@ -9,23 +9,24 @@ from typing import Any, TypeVar
 
 import httpx
 import uvicorn
-from config import settings
-from constants import (
-    DEFAULT_CONTENT_TYPE,
-    DEFAULT_SERVER_HEADER,
-    HEALTH_PROBE_DELAY,
-    RESPONSE_PREFIX,
-)
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
-from logger import logger
-from ports.api.ollama.endpoints import ollama_router, root_router
-from ports.spi.openai.gateway import OpenAIGateway, client_holder
-from services.proxy import OpenAIService
+
+from clever_lama.config import settings
+from clever_lama.constants import (
+    DEFAULT_CONTENT_TYPE,
+    DEFAULT_SERVER_HEADER,
+    HEALTH_PROBE_DELAY,
+    RESPONSE_PREFIX,
+)
+from clever_lama.logger import logger
+from clever_lama.ports.api.ollama.endpoints import ollama_router, root_router
+from clever_lama.ports.spi.openai.gateway import OpenAIGateway, client_holder
+from clever_lama.services.proxy import OpenAIService
 
 F = TypeVar('F', bound=Callable[..., Awaitable[Any]])
 

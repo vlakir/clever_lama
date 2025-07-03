@@ -3,18 +3,19 @@ from collections.abc import Awaitable, Callable
 from functools import wraps
 from typing import Any
 
-from constants import (
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
+from fastapi_cache.decorator import cache
+
+from clever_lama.constants import (
     API_VERSION,
     CACHE_EXPIRATION_S,
     HTTP_BAD_GATEWAY_ERROR,
 )
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import StreamingResponse
-from fastapi_cache.decorator import cache
-from logger import logger
-from models.ollama import OllamaMessage, OllamaModelDetails
-from ports.api.ollama.depends import OpenAIServiceDep
-from ports.api.ollama.schemas import (
+from clever_lama.logger import logger
+from clever_lama.models.ollama import OllamaMessage, OllamaModelDetails
+from clever_lama.ports.api.ollama.depends import OpenAIServiceDep
+from clever_lama.ports.api.ollama.schemas import (
     OllamaChatRequest,
     OllamaChatResponse,
     OllamaGenerateRequest,
