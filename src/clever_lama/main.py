@@ -16,20 +16,39 @@ from constants import (
     HEALTH_PROBE_DELAY,
     RESPONSE_PREFIX,
 )
-from endpoints import ollama_router
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.inmemory import InMemoryBackend
 from logger import logger
-from models import (
-    OllamaHealthResponse,
-)
-from service import OpenAIService, client_holder
+from ports.api.ollama.endpoints import ollama_router, root_router
+from ports.spi.openai.gateway import OpenAIGateway, client_holder
+from services.proxy import OpenAIService
 
 F = TypeVar('F', bound=Callable[..., Awaitable[Any]])
 
 service = OpenAIService()
+gateway = OpenAIGateway()
+
+
+def custom_key_builder(  # noqa: PLR0913
+    func: Callable[..., Any],
+    namespace: str = '',  # noqa: ARG001
+    request: Request | None = None,  # noqa: ARG001
+    response: Response | None = None,  # noqa: ARG001
+    args: tuple[Any, ...] = (),
+    kwargs: dict[str, Any] | None = None,
+) -> str:
+    if kwargs is None:
+        kwargs = {}
+    filtered_kwargs = {
+        k: v
+        for k, v in kwargs.items()
+        if k not in ['service', 'request', 'response', 'args', 'kwargs']
+    }
+    return f'{func.__module__}:{func.__name__}:{args}:{filtered_kwargs}'
 
 
 async def startup_event() -> None:
@@ -42,8 +61,13 @@ async def startup_event() -> None:
         )
         logger.info(f'✅ HTTP клиент инициализирован для {settings.api_base_url}')
 
+        FastAPICache.init(
+            InMemoryBackend(), prefix='fastapi-cache', key_builder=custom_key_builder
+        )
+        logger.info('✅ Кэш моделей инициализирован')
+
         await asyncio.sleep(HEALTH_PROBE_DELAY)
-        await service.health_check_external_api()
+        await gateway.health_check_external_api()
 
     except Exception:
         logger.exception('❌ Ошибка при запуске приложения')
@@ -127,13 +151,7 @@ async def add_ollama_headers(
 
 
 app.include_router(ollama_router)
-
-
-# Этот эндпойнт проверяет AI Assistant при первом соединении
-@app.get('/')
-async def health_check() -> OllamaHealthResponse:
-    """Health check endpoint."""
-    return OllamaHealthResponse()
+app.include_router(root_router)
 
 
 if __name__ == '__main__':

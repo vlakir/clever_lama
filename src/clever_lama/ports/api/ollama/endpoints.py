@@ -1,23 +1,25 @@
 import time
 from collections.abc import Awaitable, Callable
 from functools import wraps
-from typing import Annotated, Any
+from typing import Any
 
-from config import settings
 from constants import (
     API_VERSION,
+    CACHE_EXPIRATION_S,
     HTTP_BAD_GATEWAY_ERROR,
 )
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
+from fastapi_cache.decorator import cache
 from logger import logger
-from models import (
+from models.ollama import OllamaMessage, OllamaModelDetails
+from ports.api.ollama.depends import OpenAIServiceDep
+from ports.api.ollama.schemas import (
     OllamaChatRequest,
     OllamaChatResponse,
     OllamaGenerateRequest,
     OllamaGenerateResponse,
-    OllamaMessage,
-    OllamaModelDetails,
+    OllamaHealthResponse,
     OllamaModelsResponse,
     OllamaPullRequest,
     OllamaPullResponse,
@@ -25,7 +27,12 @@ from models import (
     OllamaShowResponse,
     OllamaVersionResponse,
 )
-from service import OpenAIService
+
+root_router = APIRouter(
+    prefix='',
+    tags=['root'],
+)
+
 
 ollama_router = APIRouter(
     prefix='/api',
@@ -33,7 +40,11 @@ ollama_router = APIRouter(
 )
 
 
-OpenAIServiceDep = Annotated[OpenAIService, Depends(OpenAIService)]
+# Этот эндпойнт проверяет AI Assistant при первом соединении
+@root_router.get('/')
+async def health_check() -> OllamaHealthResponse:
+    """Health check endpoint."""
+    return OllamaHealthResponse()
 
 
 def error_handler[F: Callable[..., Awaitable[Any]]](func: F) -> F:
@@ -64,19 +75,21 @@ async def get_version() -> OllamaVersionResponse:
 
 @ollama_router.get('/tags')
 @error_handler
-async def list_models(service: OpenAIServiceDep) -> OllamaModelsResponse | None:
+@cache(expire=CACHE_EXPIRATION_S)
+async def tags(service: OpenAIServiceDep) -> OllamaModelsResponse | None:
     """Возвращает список доступных моделей."""
     logger.info('Получен запрос к /api/tags')
 
-    models = await service.get_models_from_api()
+    models = await service.get_models()
+
     logger.info(f'Получено {len(models) if models else 0} моделей')
 
-    return service.create_ollama_models_response(models)
+    return OllamaModelsResponse(models=models)
 
 
 @ollama_router.post('/show')
 @error_handler
-async def show_model(request: OllamaShowRequest) -> OllamaShowResponse:
+async def show(request: OllamaShowRequest) -> OllamaShowResponse:
     """Возвращает информацию о модели."""
     return OllamaShowResponse(
         license='MIT',
@@ -91,6 +104,7 @@ async def show_model(request: OllamaShowRequest) -> OllamaShowResponse:
                 'families': ['llama'],
                 'parameter_size': '7B',
                 'quantization_level': 'Q4_0',
+                'num_parameters': 7_000_000_000,
             }
         ),
     )
@@ -107,17 +121,15 @@ async def pull_model(request: OllamaPullRequest) -> OllamaPullResponse:
 
 @ollama_router.post('/generate')
 @error_handler
-async def generate_text(
+async def generate(
     request: OllamaGenerateRequest, service: OpenAIServiceDep
 ) -> OllamaGenerateResponse:
     """Генерирует текст используя внешний API."""
     messages = [{'role': 'user', 'content': request.prompt}]
 
-    response_data = await service.call_openai_api(
+    generated_text = await service.call_api(
         messages, request.model, stream=request.stream
     )
-
-    generated_text = service.extract_content_from_openai_response(response_data)
 
     return OllamaGenerateResponse(
         model=request.model,
@@ -136,9 +148,9 @@ async def generate_text(
 
 @ollama_router.post('/chat', response_model=None)
 @error_handler
-async def chat_with_model(
+async def chat(
     request: OllamaChatRequest, service: OpenAIServiceDep
-) -> OllamaChatResponse | StreamingResponse | None:
+) -> OllamaChatResponse | StreamingResponse:
     """Чат с моделью используя внешний API."""
     # Добавляем детальное логирование
     logger.info(
@@ -148,24 +160,27 @@ async def chat_with_model(
     logger.debug(f'Полный запрос: {request.model_dump()}')
 
     try:
-        openai_messages = service.transform_messages_for_openai(request.messages)
+        openai_messages = [
+            {'role': msg.role, 'content': msg.content} for msg in request.messages
+        ]
+
         logger.debug(f'Трансформированные сообщения: {openai_messages}')
 
         # Если запрошена потоковая передача
         if request.stream:
             logger.info('Обработка потокового запроса')
+
             return StreamingResponse(
-                service.stream_chat_response(openai_messages, request.model),
+                service.get_stream(messages=openai_messages, model=request.model),
                 media_type='application/x-ndjson',
                 headers={'Cache-Control': 'no-cache'},
             )
 
         # Обычный ответ без потоковой передачи
-        response_data = await service.call_openai_api(
+        generated_text = await service.call_api(
             openai_messages, request.model, stream=False
         )
 
-        generated_text = service.extract_content_from_openai_response(response_data)
         logger.info(f'Получен ответ длиной {len(generated_text)} символов')
 
         return OllamaChatResponse(
@@ -176,6 +191,5 @@ async def chat_with_model(
         )
     except Exception as e:
         logger.error(f'Ошибка в chat_with_model: {e!s}', exc_info=True)
-        service.raise_connection_error(e, settings.api_base_url)
-        # noinspection PyUnreachableCode
-        return None
+
+        raise HTTPException(status_code=HTTP_BAD_GATEWAY_ERROR, detail=str(e)) from e
