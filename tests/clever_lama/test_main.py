@@ -22,23 +22,23 @@ class TestCustomKeyBuilder:
 
     def test_custom_key_builder_basic(self):
         """Test custom_key_builder with basic parameters."""
-        # Arrange
+        
         def dummy_func():
             pass
 
         args = (1, 2, 3)
         kwargs = {"param1": "value1", "param2": "value2"}
 
-        # Act
+        
         result = custom_key_builder(dummy_func, args=args, kwargs=kwargs)
 
-        # Assert
+        
         expected = f"{dummy_func.__module__}:{dummy_func.__name__}:{args}:{kwargs}"
         assert result == expected
 
     def test_custom_key_builder_with_filtered_kwargs(self):
         """Test custom_key_builder filters out specific kwargs."""
-        # Arrange
+        
         def dummy_func():
             pass
 
@@ -53,41 +53,41 @@ class TestCustomKeyBuilder:
             "param2": "value2"
         }
 
-        # Act
+        
         result = custom_key_builder(dummy_func, args=args, kwargs=kwargs)
 
-        # Assert
+        
         expected_kwargs = {"param1": "value1", "param2": "value2"}
         expected = f"{dummy_func.__module__}:{dummy_func.__name__}:{args}:{expected_kwargs}"
         assert result == expected
 
     def test_custom_key_builder_none_kwargs(self):
         """Test custom_key_builder with None kwargs."""
-        # Arrange
+        
         def dummy_func():
             pass
 
         args = (1, 2)
 
-        # Act
+        
         result = custom_key_builder(dummy_func, args=args, kwargs=None)
 
-        # Assert
+        
         expected = f"{dummy_func.__module__}:{dummy_func.__name__}:{args}:{{}}"
         assert result == expected
 
     def test_custom_key_builder_empty_args(self):
         """Test custom_key_builder with empty args."""
-        # Arrange
+        
         def dummy_func():
             pass
 
         kwargs = {"param1": "value1"}
 
-        # Act
+        
         result = custom_key_builder(dummy_func, args=(), kwargs=kwargs)
 
-        # Assert
+        
         expected = f"{dummy_func.__module__}:{dummy_func.__name__}:():{kwargs}"
         assert result == expected
 
@@ -103,16 +103,16 @@ class TestStartupEvent:
     @patch('clever_lama.main.asyncio.sleep')
     async def test_startup_event_success(self, mock_sleep, mock_settings, mock_gateway, mock_cache, mock_client_holder):
         """Test successful startup event."""
-        # Arrange
+        
         mock_settings.api_base_url = "https://api.example.com"
         mock_settings.api_key = "test-key"
         mock_settings.request_timeout = 30
         mock_gateway.health_check_external_api = AsyncMock()
 
-        # Act
+        
         await startup_event()
 
-        # Assert
+        
         assert mock_client_holder.client is not None
         mock_cache.init.assert_called_once()
         mock_sleep.assert_called_once()
@@ -126,14 +126,14 @@ class TestStartupEvent:
     @patch('clever_lama.main.shutdown_event')
     async def test_startup_event_exception(self, mock_shutdown, mock_settings, mock_gateway, mock_cache, mock_client_holder):
         """Test startup event with exception."""
-        # Arrange
+        
         mock_settings.api_base_url = "https://api.example.com"
         mock_settings.api_key = "test-key"
         mock_settings.request_timeout = 30
         mock_gateway.health_check_external_api = AsyncMock(side_effect=Exception("Health check failed"))
         mock_shutdown.return_value = AsyncMock()
 
-        # Act & Assert
+         
         with pytest.raises(Exception, match="Health check failed"):
             await startup_event()
 
@@ -147,27 +147,25 @@ class TestShutdownEvent:
     @patch('clever_lama.main.client_holder')
     async def test_shutdown_event_with_client(self, mock_client_holder):
         """Test shutdown event with existing client."""
-        # Arrange
+        
         mock_client = AsyncMock()
         mock_client_holder.client = mock_client
 
-        # Act
+        
         await shutdown_event()
 
-        # Assert
+        
         mock_client.aclose.assert_called_once()
 
     @pytest.mark.asyncio
     @patch('clever_lama.main.client_holder')
     async def test_shutdown_event_without_client(self, mock_client_holder):
         """Test shutdown event without client."""
-        # Arrange
+        
         mock_client_holder.client = None
 
-        # Act
+        
         await shutdown_event()
-
-        # Assert - Should not raise any exception
 
 
 class TestLifespan:
@@ -178,16 +176,16 @@ class TestLifespan:
     @patch('clever_lama.main.shutdown_event')
     async def test_lifespan_success(self, mock_shutdown, mock_startup):
         """Test successful lifespan context manager."""
-        # Arrange
+        
         mock_startup.return_value = AsyncMock()
         mock_shutdown.return_value = AsyncMock()
         mock_app = MagicMock()
 
-        # Act
+        
         async with lifespan(mock_app):
             pass
 
-        # Assert
+        
         mock_startup.assert_called_once()
         mock_shutdown.assert_called_once()
 
@@ -196,11 +194,11 @@ class TestLifespan:
     @patch('clever_lama.main.shutdown_event')
     async def test_lifespan_startup_exception(self, mock_shutdown, mock_startup):
         """Test lifespan with startup exception."""
-        # Arrange
+        
         mock_startup.side_effect = Exception("Startup failed")
         mock_app = MagicMock()
 
-        # Act & Assert
+         
         with pytest.raises(Exception, match="Startup failed"):
             async with lifespan(mock_app):
                 pass
@@ -217,7 +215,7 @@ class TestValidationExceptionHandler:
     @pytest.mark.asyncio
     async def test_validation_exception_handler(self):
         """Test validation exception handler."""
-        # Arrange
+        
         mock_request = MagicMock()
         mock_request.url.path = "/api/test"
 
@@ -225,10 +223,10 @@ class TestValidationExceptionHandler:
             {"type": "missing", "loc": ["field1"], "msg": "field required"}
         ])
 
-        # Act
+        
         response = await validation_exception_handler(mock_request, mock_exc)
 
-        # Assert
+        
         assert response.status_code == 422
         response_body = response.body.decode()
         assert "Data validation error" in response_body
@@ -241,7 +239,7 @@ class TestAddOllamaHeaders:
     @pytest.mark.asyncio
     async def test_add_ollama_headers(self):
         """Test add_ollama_headers middleware."""
-        # Arrange
+        
         mock_request = MagicMock()
         mock_response = MagicMock()
         mock_response.headers = {}
@@ -249,10 +247,10 @@ class TestAddOllamaHeaders:
         async def mock_call_next(request):
             return mock_response
 
-        # Act
+        
         result = await add_ollama_headers(mock_request, mock_call_next)
 
-        # Assert
+        
         assert result == mock_response
         assert 'server' in result.headers
         assert 'content-type' in result.headers
@@ -264,7 +262,7 @@ class TestFastAPIApp:
 
     def test_app_configuration(self):
         """Test FastAPI app configuration."""
-        # Assert
+        
         assert isinstance(app, FastAPI)
         assert app.title == "CleverLama"
         assert app.version == "1.0.0"
@@ -314,14 +312,14 @@ class TestAppIntegration:
     @patch('clever_lama.main.shutdown_event')
     def test_health_endpoint(self, mock_shutdown, mock_startup, client):
         """Test health check endpoint."""
-        # Arrange
+        
         mock_startup.return_value = AsyncMock()
         mock_shutdown.return_value = AsyncMock()
 
-        # Act
+        
         response = client.get("/")
 
-        # Assert
+        
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "ok"
@@ -331,14 +329,14 @@ class TestAppIntegration:
     @patch('clever_lama.main.shutdown_event')
     def test_version_endpoint(self, mock_shutdown, mock_startup, client):
         """Test version endpoint."""
-        # Arrange
+        
         mock_startup.return_value = AsyncMock()
         mock_shutdown.return_value = AsyncMock()
 
-        # Act
+        
         response = client.get("/api/version")
 
-        # Assert
+        
         assert response.status_code == 200
         data = response.json()
         assert "version" in data
@@ -347,28 +345,28 @@ class TestAppIntegration:
     @patch('clever_lama.main.shutdown_event')
     def test_cors_headers(self, mock_shutdown, mock_startup, client):
         """Test CORS headers are present."""
-        # Arrange
+        
         mock_startup.return_value = AsyncMock()
         mock_shutdown.return_value = AsyncMock()
 
-        # Act
+        
         response = client.options("/", headers={"Origin": "http://localhost:3000"})
 
-        # Assert
+        
         assert "access-control-allow-origin" in response.headers
 
     @patch('clever_lama.main.startup_event')
     @patch('clever_lama.main.shutdown_event')
     def test_ollama_headers_middleware(self, mock_shutdown, mock_startup, client):
         """Test Ollama headers middleware."""
-        # Arrange
+        
         mock_startup.return_value = AsyncMock()
         mock_shutdown.return_value = AsyncMock()
 
-        # Act
+        
         response = client.get("/")
 
-        # Assert
+        
         assert "server" in response.headers
         assert "content-type" in response.headers
         assert "x-process-time" in response.headers
@@ -377,14 +375,13 @@ class TestAppIntegration:
     @patch('clever_lama.main.shutdown_event')
     def test_validation_error_handling(self, mock_shutdown, mock_startup, client):
         """Test validation error handling."""
-        # Arrange
+        
         mock_startup.return_value = AsyncMock()
         mock_shutdown.return_value = AsyncMock()
 
-        # Act - Send invalid request to trigger validation error
         response = client.post("/api/generate", json={})  # Missing required fields
 
-        # Assert
+        
         assert response.status_code == 422
         data = response.json()
         assert "detail" in data

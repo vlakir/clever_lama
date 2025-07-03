@@ -18,10 +18,10 @@ class TestOpenAIServiceDep:
 
     def test_openai_service_dependency_injection(self):
         """Test OpenAIService dependency injection."""
-        # Arrange & Act
+         
         service = OpenAIService()
 
-        # Assert
+        
         assert service is not None
         assert isinstance(service, OpenAIService)
 
@@ -43,10 +43,10 @@ class TestOpenAIServiceDep:
 
     def test_openai_service_creation(self):
         """Test that OpenAIService can be created successfully."""
-        # Act
+        
         service = OpenAIService()
 
-        # Assert
+        
         assert service is not None
         assert isinstance(service, OpenAIService)
         assert hasattr(service, 'call_api')
@@ -55,10 +55,10 @@ class TestOpenAIServiceDep:
 
     def test_dependency_singleton_behavior(self):
         """Test dependency behavior (should create new instances)."""
-        # Act
+        
         service1 = OpenAIService()
         service2 = OpenAIService()
 
-        # Assert
+        
         # FastAPI Depends creates new instances by default
         assert service1 != service2  # Different instances

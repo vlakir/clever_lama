@@ -16,10 +16,10 @@ class TestOllamaMessage:
 
     def test_valid_message_creation(self):
         """Test creating a valid OllamaMessage."""
-        # Arrange & Act
+         
         message = OllamaMessage(role="user", content="Hello, world!")
 
-        # Assert
+        
         assert message.role == "user"
         assert message.content == "Hello, world!"
 
@@ -28,16 +28,16 @@ class TestOllamaMessage:
         valid_roles = ["system", "user", "assistant"]
         
         for role in valid_roles:
-            # Act
+            
             message = OllamaMessage(role=role, content="Test content")
             
-            # Assert
+            
             assert message.role == role
             assert message.content == "Test content"
 
     def test_invalid_role_validation(self):
         """Test validation error for invalid role."""
-        # Act & Assert
+         
         with pytest.raises(ValidationError) as exc_info:
             OllamaMessage(role="invalid_role", content="Test content")
         
@@ -45,16 +45,16 @@ class TestOllamaMessage:
 
     def test_empty_content_allowed(self):
         """Test that empty content is allowed."""
-        # Act
+        
         message = OllamaMessage(role="user", content="")
         
-        # Assert
+        
         assert message.role == "user"
         assert message.content == ""
 
     def test_role_case_sensitivity(self):
         """Test that role validation is case sensitive."""
-        # Act & Assert
+         
         with pytest.raises(ValidationError):
             OllamaMessage(role="USER", content="Test content")
         
@@ -63,7 +63,7 @@ class TestOllamaMessage:
 
     def test_missing_required_fields(self):
         """Test validation error when required fields are missing."""
-        # Act & Assert
+         
         with pytest.raises(ValidationError):
             OllamaMessage(role="user")  # Missing content
         
@@ -76,10 +76,10 @@ class TestOllamaOptions:
 
     def test_default_options(self):
         """Test creating OllamaOptions with default values."""
-        # Act
+        
         options = OllamaOptions()
         
-        # Assert
+        
         assert options.temperature is None
         assert options.top_p is None
         assert options.max_tokens is None
@@ -91,10 +91,10 @@ class TestOllamaOptions:
         valid_temperatures = [0.0, 0.5, 1.0, 1.5, 2.0]
         
         for temp in valid_temperatures:
-            # Act
+            
             options = OllamaOptions(temperature=temp)
             
-            # Assert
+            
             assert options.temperature == temp
 
     def test_invalid_temperature_values(self):
@@ -102,7 +102,7 @@ class TestOllamaOptions:
         invalid_temperatures = [-0.1, 2.1, -1.0, 3.0]
         
         for temp in invalid_temperatures:
-            # Act & Assert
+             
             with pytest.raises(ValidationError):
                 OllamaOptions(temperature=temp)
 
@@ -111,10 +111,10 @@ class TestOllamaOptions:
         valid_top_p = [0.0, 0.1, 0.5, 0.9, 1.0]
         
         for top_p in valid_top_p:
-            # Act
+            
             options = OllamaOptions(top_p=top_p)
             
-            # Assert
+            
             assert options.top_p == top_p
 
     def test_invalid_top_p_values(self):
@@ -122,7 +122,7 @@ class TestOllamaOptions:
         invalid_top_p = [-0.1, 1.1, -1.0, 2.0]
         
         for top_p in invalid_top_p:
-            # Act & Assert
+             
             with pytest.raises(ValidationError):
                 OllamaOptions(top_p=top_p)
 
@@ -131,10 +131,10 @@ class TestOllamaOptions:
         valid_max_tokens = [1, 100, 1000, 4096]
         
         for max_tokens in valid_max_tokens:
-            # Act
+            
             options = OllamaOptions(max_tokens=max_tokens)
             
-            # Assert
+            
             assert options.max_tokens == max_tokens
 
     def test_invalid_max_tokens_values(self):
@@ -142,7 +142,7 @@ class TestOllamaOptions:
         invalid_max_tokens = [0, -1, -100]
         
         for max_tokens in invalid_max_tokens:
-            # Act & Assert
+             
             with pytest.raises(ValidationError):
                 OllamaOptions(max_tokens=max_tokens)
 
@@ -151,10 +151,10 @@ class TestOllamaOptions:
         valid_num_predict = [1, 50, 200, 1000]
         
         for num_predict in valid_num_predict:
-            # Act
+            
             options = OllamaOptions(num_predict=num_predict)
             
-            # Assert
+            
             assert options.num_predict == num_predict
 
     def test_invalid_num_predict_values(self):
@@ -162,7 +162,7 @@ class TestOllamaOptions:
         invalid_num_predict = [0, -1, -50]
         
         for num_predict in invalid_num_predict:
-            # Act & Assert
+             
             with pytest.raises(ValidationError):
                 OllamaOptions(num_predict=num_predict)
 
@@ -171,10 +171,10 @@ class TestOllamaOptions:
         valid_num_ctx = [1, 512, 2048, 4096]
         
         for num_ctx in valid_num_ctx:
-            # Act
+            
             options = OllamaOptions(num_ctx=num_ctx)
             
-            # Assert
+            
             assert options.num_ctx == num_ctx
 
     def test_invalid_num_ctx_values(self):
@@ -182,13 +182,13 @@ class TestOllamaOptions:
         invalid_num_ctx = [0, -1, -512]
         
         for num_ctx in invalid_num_ctx:
-            # Act & Assert
+             
             with pytest.raises(ValidationError):
                 OllamaOptions(num_ctx=num_ctx)
 
     def test_all_options_together(self):
         """Test setting all options together."""
-        # Act
+        
         options = OllamaOptions(
             temperature=0.7,
             top_p=0.9,
@@ -197,7 +197,7 @@ class TestOllamaOptions:
             num_ctx=2048
         )
         
-        # Assert
+        
         assert options.temperature == 0.7
         assert options.top_p == 0.9
         assert options.max_tokens == 1000
@@ -210,10 +210,10 @@ class TestOllamaModelDetails:
 
     def test_default_model_details(self):
         """Test creating OllamaModelDetails with default values."""
-        # Act
+        
         details = OllamaModelDetails()
         
-        # Assert
+        
         assert details.parent_model == ""
         assert details.format == "gguf"
         assert details.family == ""
@@ -224,7 +224,7 @@ class TestOllamaModelDetails:
 
     def test_custom_model_details(self):
         """Test creating OllamaModelDetails with custom values."""
-        # Act
+        
         details = OllamaModelDetails(
             parent_model="llama2",
             format="ggml",
@@ -235,7 +235,7 @@ class TestOllamaModelDetails:
             num_parameters=6_700_000_000
         )
         
-        # Assert
+        
         assert details.parent_model == "llama2"
         assert details.format == "ggml"
         assert details.family == "llama"
@@ -246,18 +246,18 @@ class TestOllamaModelDetails:
 
     def test_empty_families_list(self):
         """Test that families can be an empty list."""
-        # Act
+        
         details = OllamaModelDetails(families=[])
         
-        # Assert
+        
         assert details.families == []
 
     def test_single_family_in_list(self):
         """Test families with a single item."""
-        # Act
+        
         details = OllamaModelDetails(families=["llama"])
         
-        # Assert
+        
         assert details.families == ["llama"]
 
 
@@ -266,13 +266,13 @@ class TestOllamaModel:
 
     def test_valid_model_creation(self):
         """Test creating a valid OllamaModel."""
-        # Arrange
+        
         details = OllamaModelDetails(
             family="llama",
             parameter_size="7B"
         )
         
-        # Act
+        
         model = OllamaModel(
             name="llama2:7b",
             model="llama2:7b",
@@ -282,7 +282,7 @@ class TestOllamaModel:
             details=details
         )
         
-        # Assert
+        
         assert model.name == "llama2:7b"
         assert model.model == "llama2:7b"
         assert model.modified_at == "2023-12-01T10:00:00Z"
@@ -293,10 +293,10 @@ class TestOllamaModel:
 
     def test_model_with_default_details(self):
         """Test creating OllamaModel with default details."""
-        # Arrange
+        
         details = OllamaModelDetails()
         
-        # Act
+        
         model = OllamaModel(
             name="test-model",
             model="test-model",
@@ -306,7 +306,7 @@ class TestOllamaModel:
             details=details
         )
         
-        # Assert
+        
         assert model.name == "test-model"
         assert model.details.format == "gguf"  # Default value
         assert model.details.num_parameters == 7_000_000_000  # Default value
@@ -347,10 +347,10 @@ class TestOllamaModel:
 
     def test_zero_size_model(self):
         """Test model with zero size."""
-        # Arrange
+        
         details = OllamaModelDetails()
         
-        # Act
+        
         model = OllamaModel(
             name="empty-model",
             model="empty-model",
@@ -360,16 +360,16 @@ class TestOllamaModel:
             details=details
         )
         
-        # Assert
+        
         assert model.size == 0
 
     def test_large_size_model(self):
         """Test model with very large size."""
-        # Arrange
+        
         details = OllamaModelDetails()
         large_size = 100_000_000_000  # 100GB
         
-        # Act
+        
         model = OllamaModel(
             name="large-model",
             model="large-model",
@@ -379,12 +379,12 @@ class TestOllamaModel:
             details=details
         )
         
-        # Assert
+        
         assert model.size == large_size
 
     def test_model_serialization(self):
         """Test model serialization to dict."""
-        # Arrange
+        
         details = OllamaModelDetails(family="llama", parameter_size="7B")
         model = OllamaModel(
             name="test-model",
@@ -395,10 +395,10 @@ class TestOllamaModel:
             details=details
         )
         
-        # Act
+        
         model_dict = model.model_dump()
         
-        # Assert
+        
         assert model_dict["name"] == "test-model"
         assert model_dict["model"] == "test-model"
         assert model_dict["size"] == 1_000_000_000

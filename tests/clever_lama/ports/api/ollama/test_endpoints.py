@@ -34,10 +34,10 @@ class TestHealthCheck:
     @pytest.mark.asyncio
     async def test_health_check(self):
         """Test health check endpoint returns correct response."""
-        # Act
+        
         result = await health_check()
 
-        # Assert
+        
         assert result.status == "ok"
 
 
@@ -47,26 +47,26 @@ class TestErrorHandler:
     @pytest.mark.asyncio
     async def test_error_handler_success(self):
         """Test error handler with successful function execution."""
-        # Arrange
+        
         @error_handler
         async def test_func():
             return "success"
 
-        # Act
+        
         result = await test_func()
 
-        # Assert
+        
         assert result == "success"
 
     @pytest.mark.asyncio
     async def test_error_handler_http_exception(self):
         """Test error handler with HTTPException."""
-        # Arrange
+        
         @error_handler
         async def test_func():
             raise HTTPException(status_code=404, detail="Not found")
 
-        # Act & Assert
+         
         with pytest.raises(HTTPException) as exc_info:
             await test_func()
 
@@ -76,12 +76,12 @@ class TestErrorHandler:
     @pytest.mark.asyncio
     async def test_error_handler_generic_exception(self):
         """Test error handler with generic exception."""
-        # Arrange
+        
         @error_handler
         async def test_func():
             raise ValueError("Test error")
 
-        # Act & Assert
+         
         with pytest.raises(HTTPException) as exc_info:
             await test_func()
 
@@ -95,10 +95,10 @@ class TestVersionEndpoint:
     @pytest.mark.asyncio
     async def test_get_version(self):
         """Test get_version endpoint returns correct version."""
-        # Act
+        
         result = await get_version()
 
-        # Assert
+        
         assert hasattr(result, 'version')
         assert result.version is not None
 
@@ -114,7 +114,7 @@ class TestTagsEndpoint:
     @pytest.mark.asyncio
     async def test_tags_success(self, mock_service):
         """Test tags endpoint with successful response."""
-        # Arrange
+        
         from clever_lama.models.ollama import OllamaModelDetails
         from clever_lama.ports.api.ollama.schemas import OllamaModelsResponse
 
@@ -139,11 +139,10 @@ class TestTagsEndpoint:
         ]
         mock_service.get_models.return_value = mock_models
 
-        # Act - Call the function directly without cache decorator
         models = await mock_service.get_models()
         result = OllamaModelsResponse(models=models)
 
-        # Assert
+        
         assert result is not None
         assert len(result.models) == 2
         assert result.models[0].name == "model1"
@@ -153,33 +152,31 @@ class TestTagsEndpoint:
     @pytest.mark.asyncio
     async def test_tags_empty_models(self, mock_service):
         """Test tags endpoint with empty models list."""
-        # Arrange
+        
         from clever_lama.ports.api.ollama.schemas import OllamaModelsResponse
 
         mock_service.get_models.return_value = []
 
-        # Act - Call the function directly without cache decorator
         models = await mock_service.get_models()
         result = OllamaModelsResponse(models=models)
 
-        # Assert
+        
         assert result is not None
         assert len(result.models) == 0
 
     @pytest.mark.asyncio
     async def test_tags_none_models(self, mock_service):
         """Test tags endpoint with None models."""
-        # Arrange
+        
         from clever_lama.ports.api.ollama.schemas import OllamaModelsResponse
 
         mock_service.get_models.return_value = None
 
-        # Act - Call the function directly without cache decorator
         models = await mock_service.get_models()
         # Handle None case by using empty list
         result = OllamaModelsResponse(models=models or [])
 
-        # Assert
+        
         assert result is not None
         assert len(result.models) == 0
 
@@ -190,13 +187,13 @@ class TestShowEndpoint:
     @pytest.mark.asyncio
     async def test_show(self):
         """Test show endpoint returns model information."""
-        # Arrange
+        
         request = OllamaShowRequest(name="test-model")
 
-        # Act
+        
         result = await show(request)
 
-        # Assert
+        
         assert result.license == "MIT"
         assert result.modelfile == "FROM test-model"
         assert result.parameters == "temperature 0.7\ntop_p 0.9"
@@ -212,13 +209,13 @@ class TestPullEndpoint:
     @pytest.mark.asyncio
     async def test_pull_model(self):
         """Test pull_model endpoint."""
-        # Arrange
+        
         request = OllamaPullRequest(name="test-model")
 
-        # Act
+        
         result = await pull_model(request)
 
-        # Assert
+        
         assert result.status == "pulling test-model"
         assert result.total == 1000000000
         assert result.completed == 1000000000
@@ -235,7 +232,7 @@ class TestGenerateEndpoint:
     @pytest.mark.asyncio
     async def test_generate_success(self, mock_service):
         """Test generate endpoint with successful response."""
-        # Arrange
+        
         request = OllamaGenerateRequest(
             model="test-model",
             prompt="Hello, world!",
@@ -243,10 +240,10 @@ class TestGenerateEndpoint:
         )
         mock_service.call_api.return_value = "Generated response"
 
-        # Act
+        
         result = await generate(request, mock_service)
 
-        # Assert
+        
         assert result.model == "test-model"
         assert result.response == "Generated response"
         assert result.done is True
@@ -260,7 +257,7 @@ class TestGenerateEndpoint:
     @pytest.mark.asyncio
     async def test_generate_with_stream(self, mock_service):
         """Test generate endpoint with streaming."""
-        # Arrange
+        
         request = OllamaGenerateRequest(
             model="test-model",
             prompt="Hello, world!",
@@ -268,10 +265,10 @@ class TestGenerateEndpoint:
         )
         mock_service.call_api.return_value = "Generated response"
 
-        # Act
+        
         result = await generate(request, mock_service)
 
-        # Assert
+        
         assert result.model == "test-model"
         assert result.response == "Generated response"
         mock_service.call_api.assert_called_once_with(
@@ -294,7 +291,7 @@ class TestChatEndpoint:
     @pytest.mark.asyncio
     async def test_chat_non_stream(self, mock_service):
         """Test chat endpoint with non-streaming response."""
-        # Arrange
+        
         request = OllamaChatRequest(
             model="test-model",
             messages=[
@@ -305,10 +302,10 @@ class TestChatEndpoint:
         )
         mock_service.call_api.return_value = "Chat response"
 
-        # Act
+        
         result = await chat(request, mock_service)
 
-        # Assert
+        
         assert result.model == "test-model"
         assert result.message.role == "assistant"
         assert result.message.content == "Chat response"
@@ -327,7 +324,7 @@ class TestChatEndpoint:
     @pytest.mark.asyncio
     async def test_chat_stream(self, mock_service):
         """Test chat endpoint with streaming response."""
-        # Arrange
+        
         request = OllamaChatRequest(
             model="test-model",
             messages=[OllamaMessage(role="user", content="Hello")],
@@ -352,10 +349,10 @@ class TestChatEndpoint:
         mock_items = ['{"message": {"content": "Hello"}}', '{"message": {"content": " world"}}']
         mock_service.get_stream.return_value = MockAsyncIterator(mock_items)
 
-        # Act
+        
         result = await chat(request, mock_service)
 
-        # Assert
+        
         assert isinstance(result, StreamingResponse)
         assert result.media_type == "application/x-ndjson"
         assert result.headers["Cache-Control"] == "no-cache"
@@ -369,7 +366,7 @@ class TestChatEndpoint:
     @pytest.mark.asyncio
     async def test_chat_exception_handling(self, mock_service):
         """Test chat endpoint exception handling."""
-        # Arrange
+        
         request = OllamaChatRequest(
             model="test-model",
             messages=[OllamaMessage(role="user", content="Hello")],
@@ -377,7 +374,7 @@ class TestChatEndpoint:
         )
         mock_service.call_api.side_effect = Exception("Service error")
 
-        # Act & Assert
+         
         with pytest.raises(HTTPException) as exc_info:
             await chat(request, mock_service)
 
@@ -386,7 +383,7 @@ class TestChatEndpoint:
 
     def test_chat_empty_messages(self):
         """Test chat endpoint with empty messages raises validation error."""
-        # Act & Assert
+         
         with pytest.raises(ValidationError):
             OllamaChatRequest(
                 model="test-model",
