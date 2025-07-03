@@ -231,7 +231,7 @@ class TestValidationExceptionHandler:
         # Assert
         assert response.status_code == 422
         response_body = response.body.decode()
-        assert "Ошибка валидации данных" in response_body
+        assert "Data validation error" in response_body
         assert "errors" in response_body
 
 
@@ -268,7 +268,7 @@ class TestFastAPIApp:
         assert isinstance(app, FastAPI)
         assert app.title == "CleverLama"
         assert app.version == "1.0.0"
-        assert "Мост между Ollama API и OpenAI-совместимыми провайдерами" in app.description
+        assert "Bridge between Ollama API and OpenAI-compatible providers" in app.description
         assert app.docs_url is None
         assert app.redoc_url is None
 

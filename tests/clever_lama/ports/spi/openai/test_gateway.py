@@ -366,7 +366,7 @@ class TestOpenAIGateway:
         with pytest.raises(ConnectionAbortedError) as exc_info:
             gateway.raise_connection_error(exception, gateway_url)
 
-        assert "Ошибка подключения к OpenAI API" in str(exc_info.value)
+        assert "Connection error to OpenAI API" in str(exc_info.value)
         assert gateway_url in str(exc_info.value)
 
     def test_raise_connection_error_with_newline(self, gateway):
@@ -380,5 +380,5 @@ class TestOpenAIGateway:
             gateway.raise_connection_error(exception, gateway_url, add_new_line=True)
 
         error_message = str(exc_info.value)
-        assert "Ошибка подключения к OpenAI API" in error_message
+        assert "Connection error to OpenAI API" in error_message
         assert "\n\n" in error_message
