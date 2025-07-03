@@ -1,120 +1,221 @@
 # CleverLama
 
-Мост между OpenAI-совместимыми провайдерами и Ollama API
+Bridge between Ollama API and OpenAI-compatible providers
 
-## Описание
+## Description
 
-CleverLama - это API-мост, который позволяет использовать OpenAI-совместимые провайдеры 
-(например, через API aitunnel.ru) с приложениями, ожидающими Ollama API (например, 
-JetBrains AI Assistant).
+CleverLama is an API bridge that provides an Ollama API interface for working with OpenAI-compatible providers. This allows you to use applications that expect Ollama API (e.g., JetBrains AI Assistant) with any OpenAI-compatible services (e.g., via aitunnel.ru API).
 
+**How it works**: CleverLama accepts requests in Ollama API format, transforms them to OpenAI API format, sends them to an external provider, receives the response, and transforms it back to Ollama format.
 
-## Возможности
+## Architecture
 
-- ✅ Совместимость с Ollama API
-- ✅ Поддержка OpenAI-совместимых провайдеров
-- ✅ Трансформация запросов между форматами
-- ✅ Поддержка streaming ответов
-- ✅ Docker контейнеризация
-- ✅ Логирование и мониторинг
-- ✅ CLI для управления
+The project is built on FastAPI and uses the Ports & Adapters architectural pattern:
+- **Ports/API**: Ollama-compatible HTTP endpoints
+- **Ports/SPI**: Integration with OpenAI-compatible providers  
+- **Services**: Business logic for request transformation
+- **Models**: Data models for both API formats
 
-## Быстрый старт
+## Features
 
-### С помощью Docker Compose
+- ✅ Full compatibility with Ollama API
+- ✅ Support for OpenAI-compatible providers
+- ✅ Request transformation between formats
+- ✅ Streaming response support
+- ✅ Model list caching
+- ✅ Docker containerization
+- ✅ Structured logging
+- ✅ Health checks and monitoring
 
-1. Клонируйте репозиторий:
+## Quick Start
+
+### Using Docker Compose
+
+1. Clone the repository:
 ```bash
 git clone https://github.com/vlakir/clever-lama.git
 cd clever-lama
 ```
 
-2. Создайте файл `.env` с вашими настройками:
+2. Create a `.env` file with your settings:
 ```bash
 API_KEY=your_api_key_here
 API_BASE_URL=https://api.aitunnel.ru/v1
 LOG_LEVEL=INFO
 ```
 
-3. Запустите сервис:
+3. Start the service:
 ```bash
 docker-compose up -d
 ```
 
-### Локальная разработка
+### Local Development
 
-1. Установите Poetry:
+1. Install Poetry:
 ```bash
 curl -sSL https://install.python-poetry.org | python3 -
 ```
 
-2. Установите зависимости:
+2. Install dependencies:
 ```bash
 poetry install
 ```
 
-3. Запустите сервер:
+3. Start the server:
 ```bash
 poetry run python src/clever_lama/main.py
 ```
 
-## Использование
+## Usage
 
-После запуска сервис будет доступен на `http://localhost:11434` и предоставляет следующие эндпоинты:
+After startup, the service will be available at `http://localhost:11434` and provides the following endpoints:
 
-- `GET /` - проверка здоровья сервиса
-- `GET /api/version` - версия API
-- `GET /api/tags` - список доступных моделей
-- `POST /api/show` - информация о модели
-- `POST /api/pull` - загрузка модели
-- `POST /api/generate` - генерация текста
-- `POST /api/chat` - чат с моделью
+- `GET /` - service health check
+- `GET /api/version` - API version
+- `GET /api/tags` - list of available models
+- `POST /api/show` - model information
+- `POST /api/pull` - model download
+- `POST /api/generate` - text generation
+- `POST /api/chat` - chat with model
 
-## Конфигурация
+## Configuration
 
-Настройки задаются через переменные окружения:
+Settings are configured via environment variables:
 
-- `API_KEY` - ключ API для провайдера (обязательно)
-- `API_BASE_URL` - базовый URL API провайдера (по умолчанию: https://api.aitunnel.ru/v1)
-- `LOG_LEVEL` - уровень логирования (по умолчанию: INFO)
-- `HOST` - хост для привязки (по умолчанию: 0.0.0.0)
-- `PORT` - порт для привязки (по умолчанию: 11434)
+- `API_KEY` - API key for the provider (required)
+- `API_BASE_URL` - base URL of the API provider (default: https://api.aitunnel.ru/v1)
+- `LOG_LEVEL` - logging level (default: INFO)
+- `HOST` - host to bind to (default: 0.0.0.0)
+- `PORT` - port to bind to (default: 11434)
+- `CACHE_DURATION_MINUTES` - model list cache duration in minutes (default: 10)
 
-## CLI команды
+## Usage Examples
 
-После установки доступны следующие команды:
+### Getting list of models
+```bash
+curl http://localhost:11434/api/tags
+```
 
-- `clever-lama-manage` - основная команда управления
-- `clever-lama-dev` - запуск в режиме разработки
-- `clever-lama-prod` - запуск в продакшн режиме
-- `clever-lama-build` - сборка Docker образа
+### Text generation
+```bash
+curl -X POST http://localhost:11434/api/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-3.5-turbo",
+    "prompt": "Tell me a joke about programmers",
+    "stream": false
+  }'
+```
 
-## Разработка
+### Chat with model
+```bash
+curl -X POST http://localhost:11434/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-3.5-turbo",
+    "messages": [
+      {"role": "user", "content": "Hello! How are you?"}
+    ],
+    "stream": false
+  }'
+```
 
-### Требования
+### Streaming chat
+```bash
+curl -X POST http://localhost:11434/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-3.5-turbo",
+    "messages": [
+      {"role": "user", "content": "Write a short story"}
+    ],
+    "stream": true
+  }'
+```
 
-- Python 3.11+
-- Poetry
-- Docker (опционально)
 
-### Установка для разработки
+## Development
+
+### Requirements
+
+- Python 3.11-3.13
+- Poetry 1.8+
+- Docker (optional)
+
+### Main Dependencies
+
+- **FastAPI** - web framework for API
+- **httpx** - HTTP client for external API requests
+- **uvicorn** - ASGI server
+- **pydantic-settings** - configuration management
+- **python-dotenv** - environment variables loading
+- **fastapi-cache2** - response caching
+
+### Project Status
+
+🚧 **Beta version** - project is under active development. API may change.
+
+### Development Installation
 
 ```bash
 poetry install --with dev
 ```
 
-### Запуск тестов
+### Running Tests
 
 ```bash
 poetry run pytest
 ```
 
-### Линтинг и форматирование
+### Linting and Formatting
 
 ```bash
 ./check.sh
 ```
 
-## Лицензия
+## Troubleshooting
+
+### Connection Issues
+
+**Error**: `HTTP client not initialized`
+- Check the correctness of environment variables `API_KEY` and `API_BASE_URL`
+- Make sure the external API is accessible
+
+**Error**: `502 Bad Gateway`
+- Check API key validity
+- Make sure the model exists at the provider
+- Check application logs for detailed information
+
+### Performance Issues
+
+**Slow responses**:
+- Increase cache duration via `CACHE_DURATION_MINUTES`
+- Check network connection to the provider
+- Consider using faster models
+
+### Logging
+
+For detailed logging, set:
+```bash
+LOG_LEVEL=DEBUG
+```
+
+Logs contain information about:
+- Incoming requests
+- Data transformation
+- External API requests
+- Errors and exceptions
+
+## Compatibility
+
+### Tested with:
+- **JetBrains AI Assistant** ✅
+
+### Supported providers:
+- OpenAI API
+- Azure OpenAI
+- Any OpenAI-compatible APIs (aitunnel.ru, etc.)
+
+## License
 
 MIT License

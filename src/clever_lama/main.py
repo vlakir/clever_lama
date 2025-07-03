@@ -53,61 +53,59 @@ def custom_key_builder(  # noqa: PLR0913
 
 
 async def startup_event() -> None:
-    """Событие запуска приложения."""
+    """Application startup event."""
     try:
         client_holder.client = httpx.AsyncClient(
             base_url=settings.api_base_url,
             headers={'Authorization': f'Bearer {settings.api_key}'},
             timeout=settings.request_timeout,
         )
-        logger.info(f'✅ HTTP клиент инициализирован для {settings.api_base_url}')
+        logger.info(f'✅ HTTP client initialized for {settings.api_base_url}')
 
         FastAPICache.init(
             InMemoryBackend(), prefix='fastapi-cache', key_builder=custom_key_builder
         )
-        logger.info('✅ Кэш моделей инициализирован')
+        logger.info('✅ Model cache initialized')
 
         await asyncio.sleep(HEALTH_PROBE_DELAY)
         await gateway.health_check_external_api()
 
     except Exception:
-        logger.exception('❌ Ошибка при запуске приложения')
+        logger.exception('❌ Error during application startup')
         await shutdown_event()
         raise
 
 
 async def shutdown_event() -> None:
-    """Событие остановки приложения."""
+    """Application shutdown event."""
     if client_holder.client:
         await client_holder.client.aclose()
-        logger.info('✅ HTTP клиент закрыт')
+        logger.info('✅ HTTP client closed')
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    """Управление жизненным циклом приложения."""
+    """Application lifecycle management."""
     # Startup
-    logger.info('🚀 Запуск CleverLama API моста')
+    logger.info('🚀 Starting CleverLama API bridge')
     await startup_event()
 
     yield
 
     # Shutdown
-    logger.info('🛑 Остановка CleverLama API моста')
+    logger.info('🛑 Stopping CleverLama API bridge')
     await shutdown_event()
 
 
-# Создание FastAPI приложения
 app = FastAPI(
     title='CleverLama',
     version='1.0.0',
-    description='Мост между Ollama API и OpenAI-совместимыми провайдерами',
-    docs_url=None,  # Отключаем swagger - как y настоящего Ollama
-    redoc_url=None,  # Отключаем redoc
+    description='Bridge between Ollama API and OpenAI-compatible providers',
+    docs_url=None,  # Disable swagger - like real Ollama
+    redoc_url=None,  # Disable redoc
     lifespan=lifespan,
 )
 
-# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
@@ -121,14 +119,14 @@ app.add_middleware(
 async def validation_exception_handler(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:
-    """Обработчик ошибок валидации."""
-    logger.error(f'❌ Ошибка валидации для {request.url.path}')
-    logger.error(f'❌ Детали ошибок: {exc.errors()}')
+    """Handle validation errors."""
+    logger.error(f'❌ Validation error for {request.url.path}')
+    logger.error(f'❌ Error details: {exc.errors()}')
 
     return JSONResponse(
         status_code=422,
         content={
-            'detail': f' {RESPONSE_PREFIX} Ошибка валидации данных',
+            'detail': f' {RESPONSE_PREFIX} Data validation error',
             'errors': exc.errors(),
         },
     )
@@ -138,12 +136,12 @@ async def validation_exception_handler(
 async def add_ollama_headers(
     request: Request, call_next: Callable[[Request], Awaitable[Response]]
 ) -> Response:
-    """Добавляет заголовки для совместимости с Ollama."""
+    """Add headers for Ollama compatibility."""
     start_time = time.time()
     response = await call_next(request)
     process_time = time.time() - start_time
 
-    # Добавляем заголовки как y настоящего Ollama
+    # Add headers like real Ollama
     response.headers['server'] = DEFAULT_SERVER_HEADER
     response.headers['content-type'] = DEFAULT_CONTENT_TYPE
     response.headers['x-process-time'] = str(process_time)
@@ -157,8 +155,8 @@ app.include_router(root_router)
 
 if __name__ == '__main__':
     python_version = sys.version.split()[0]
-    logger.info(f'🐍 Python версия: {python_version}')
-    logger.info(f'⚙️ Конфигурация: {settings.model_dump_json(indent=2)}')
+    logger.info(f'🐍 Python version: {python_version}')
+    logger.info(f'⚙️ Configuration: {settings.model_dump_json(indent=2)}')
 
     uvicorn.run(
         'main:app',

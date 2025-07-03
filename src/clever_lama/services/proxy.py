@@ -55,23 +55,23 @@ class OpenAIService:
                             return content
 
         except (IndexError, KeyError, TypeError):
-            logger.warning('Некорректный ответ от OpenAI', exc_info=True)
+            logger.warning('Invalid response from OpenAI', exc_info=True)
             return ''
         except Exception:
-            logger.error('Ошибка при обработке ответа от OpenAI', exc_info=True)
+            logger.error('Error processing response from OpenAI', exc_info=True)
             raise
 
         return ''
 
     async def get_models(self) -> list[OllamaModel]:
-        """Создает ответ в формате Ollama из списка моделей."""
+        """Create Ollama format response from model list."""
         models = await gateway.get_models_from_api()
 
         ollama_models = []
 
         if len(models) == 0:
             ollama_models.append(fake_model)
-            logger.warning('Не удалось получить модели. Добавлена фейковая модель.')
+            logger.warning('Failed to get models. Added fake model.')
 
         for model in models:
             model_id = model.get('id', DEFAULT_MODEL)
@@ -86,14 +86,14 @@ class OpenAIService:
             except (ValueError, TypeError):
                 created_time = int(time.time())
 
-            # Создаем модель в формате Ollama
+            # Create model in Ollama format
             ollama_model = OllamaModel(
                 name=model_id,
                 model=model_id,
                 modified_at=time.strftime(
                     '%Y-%m-%dT%H:%M:%S.%fZ', time.gmtime(float(created_time))
                 ),
-                size=1000000000,  # 1GB примерный размер
+                size=1000000000,  # 1GB approximate size
                 digest=f'sha256:{"0" * 64}',  # Dummy digest
                 details=OllamaModelDetails.model_validate(
                     {
@@ -113,8 +113,8 @@ class OpenAIService:
     async def get_stream(
         self, messages: list[dict[str, str]], model: str
     ) -> AsyncGenerator[str]:
-        """Генерирует потоковый ответ в формате Ollama."""
-        logger.info('Начинаем потоковую передачу ответа')
+        """Generate streaming response in Ollama format."""
+        logger.info('Starting streaming response')
 
         accumulated_content = ''
         created_at = time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
@@ -149,12 +149,12 @@ class OpenAIService:
 
             yield json.dumps(final_chunk, ensure_ascii=False) + '\n'
             logger.info(
-                f'Потоковая передача завершена. '
-                f'Общая длина: {len(accumulated_content)} символов'
+                f'Streaming completed. '
+                f'Total length: {len(accumulated_content)} characters'
             )
 
         except Exception as e:
-            logger.error(f'Ошибка в потоковой передаче: {e!s}', exc_info=True)
+            logger.error(f'Error in streaming: {e!s}', exc_info=True)
 
             error_chunk = {
                 'model': model,
@@ -166,7 +166,7 @@ class OpenAIService:
 
     @staticmethod
     def _extract_delta_content(chunk: dict[str, Any]) -> str:
-        """Извлекает контент из delta chunk'а OpenAI."""
+        """Extract content from OpenAI delta chunk."""
         try:
             choices = chunk.get('choices', [])
             if choices and isinstance(choices, list):
