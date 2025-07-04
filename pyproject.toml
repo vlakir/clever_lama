@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "clever-lama"
-version = "0.1.0"
+version = "0.1.1"
 description = "Мост между Ollama API и OpenAI-совместимыми провайдерами"
 authors = ["vlakir <vladimir@kirievskiy.ru>"]
 readme = "README.md"

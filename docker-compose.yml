@@ -3,7 +3,7 @@
 services:
   clever-lama:
     build: .
-    image: clever_lama
+    image: clever-lama
     container_name: clever-lama
     ports:
       - "11434:11434"

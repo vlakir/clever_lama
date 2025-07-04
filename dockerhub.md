@@ -11,14 +11,6 @@ with any OpenAI-compatible services (e.g., via aitunnel.ru API).
 **How it works**: CleverLama accepts requests in Ollama API format, transforms them to OpenAI API format, 
 sends them to an external provider, receives the response, and transforms it back to Ollama format.
 
-## Architecture
-
-The project is built on FastAPI and uses the Ports & Adapters architectural pattern:
-- **Ports/API**: Ollama-compatible HTTP endpoints
-- **Ports/SPI**: Integration with OpenAI-compatible providers  
-- **Services**: Business logic for request transformation
-- **Models**: Data models for both API formats
-
 ## Features
 
 - ✅ Full compatibility with Ollama API
@@ -66,43 +58,6 @@ Stop service:
 ```bash
 docker stop clever-lama
 docker rm clever-lama
-```
-
-### From source using Docker Compose
-
-1. Clone the repository:
-```bash
-git clone https://github.com/vlakir/clever-lama.git
-cd clever-lama
-```
-
-2. Create a `.env` file with your settings:
-```bash
-API_KEY=your_api_key_here
-API_BASE_URL=https://api.aitunnel.ru/v1
-LOG_LEVEL=INFO
-```
-
-3. Start the service:
-```bash
-docker-compose up -d
-```
-
-### Local Development
-
-1. Install Poetry:
-```bash
-curl -sSL https://install.python-poetry.org | python3 -
-```
-
-2. Install dependencies:
-```bash
-poetry install
-```
-
-3. Start the server:
-```bash
-poetry run python src/clever_lama/main.py
 ```
 
 ## Usage
@@ -173,45 +128,9 @@ curl -X POST http://localhost:11434/api/chat \
   }'
 ```
 
-
-## Development
-
-### Requirements
-
-- Python 3.11-3.13
-- Poetry 1.8+
-- Docker (optional)
-
-### Main Dependencies
-
-- **FastAPI** - web framework for API
-- **httpx** - HTTP client for external API requests
-- **uvicorn** - ASGI server
-- **pydantic-settings** - configuration management
-- **python-dotenv** - environment variables loading
-- **fastapi-cache2** - response caching
-
 ### Project Status
 
 🚧 **Beta version** - project is under active development. API may change.
-
-### Development Installation
-
-```bash
-poetry install --with dev
-```
-
-### Running Tests
-
-```bash
-poetry run pytest
-```
-
-### Linting and Formatting
-
-```bash
-./check.sh
-```
 
 ## Troubleshooting
 
@@ -233,18 +152,6 @@ poetry run pytest
 - Check network connection to the provider
 - Consider using faster models
 
-### Logging
-
-For detailed logging, set:
-```bash
-LOG_LEVEL=DEBUG
-```
-
-Logs contain information about:
-- Incoming requests
-- Data transformation
-- External API requests
-- Errors and exceptions
 
 ## Compatibility
 
