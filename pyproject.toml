@@ -44,10 +44,10 @@ mypy = "^1.16.1"
 
 # Скрипты - теперь правильные пути!
 [tool.poetry.scripts]
-clever-lama-manage = "clever_lama.cli:cli"
-clever-lama-dev = "clever_lama.cli:dev_alias"
-clever-lama-prod = "clever_lama.cli:prod_alias"
-clever-lama-build = "clever_lama.cli:build_alias"
+clever-lama-manage = "cli:cli"
+clever-lama-dev = "cli:dev_alias"
+clever-lama-prod = "cli:prod_alias"
+clever-lama-build = "cli:build_alias"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -2,7 +2,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field
 
-from clever_lama.models.ollama import (
+from models.ollama import (
     OllamaMessage,
     OllamaModel,
     OllamaModelDetails,

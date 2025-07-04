@@ -3,9 +3,9 @@ import time
 from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING, Any, Never
 
-from clever_lama.config import settings
-from clever_lama.constants import DEFAULT_MODEL, HTTP_OK, RESPONSE_PREFIX
-from clever_lama.logger import logger
+from config import settings
+from constants import DEFAULT_MODEL, HTTP_OK, RESPONSE_PREFIX
+from logger import logger
 
 if TYPE_CHECKING:
     import httpx
@@ -28,15 +28,19 @@ class OpenAIGateway:
         """Check external API availability."""
         if not client_holder.client:
             msg = 'HTTP client not initialized'
+
             self.raise_connection_error(Exception(msg), settings.api_base_url)
+
         try:
             response = await client_holder.client.get('/models')
+
             if response.status_code == HTTP_OK:
                 logger.info('✅ External API is available')
             else:
                 logger.warning(f'⚠️ External API returned status {response.status_code}')
-        except Exception:
-            logger.error(f'❌ External API {settings.api_base_url} is unavailable')
+
+        except Exception as e:
+            logger.error(f'❌ External API {settings.api_base_url} is unavailable: {e}')
 
     async def get_models_from_api(self) -> list[dict[str, Any]]:
         """Get list of models from external API."""

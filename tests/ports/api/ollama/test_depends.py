@@ -1,10 +1,7 @@
 """Tests for Ollama API dependencies."""
 
-import pytest
-from unittest.mock import patch, MagicMock
-
-from clever_lama.ports.api.ollama.depends import OpenAIServiceDep
-from clever_lama.services.proxy import OpenAIService
+from ports.api.ollama.depends import OpenAIServiceDep
+from services.proxy import OpenAIService
 
 
 class TestOpenAIServiceDep:

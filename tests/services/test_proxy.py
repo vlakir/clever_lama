@@ -2,11 +2,10 @@
 
 import json
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from typing import AsyncGenerator
+from unittest.mock import AsyncMock, patch
 
-from clever_lama.services.proxy import OpenAIService
-from clever_lama.models.ollama import OllamaModel
+from services.proxy import OpenAIService
+from models.ollama import OllamaModel
 
 
 class TestOpenAIService:
@@ -20,7 +19,7 @@ class TestOpenAIService:
     @pytest.fixture
     def mock_gateway(self):
         """Mock OpenAIGateway for testing."""
-        with patch('clever_lama.services.proxy.gateway') as mock:
+        with patch('services.proxy.gateway') as mock:
             yield mock
 
     @pytest.mark.asyncio

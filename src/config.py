@@ -82,7 +82,7 @@ class Settings(BaseSettings):
 
     # Calculate path to .env file in project root
     _current_file = Path(__file__)
-    _project_root = _current_file.parent.parent.parent
+    _project_root = _current_file.parent.parent
     _env_file = _project_root / '.env'
 
     model_config = SettingsConfigDict(

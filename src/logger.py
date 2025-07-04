@@ -2,7 +2,7 @@ import logging
 import sys
 from types import MappingProxyType
 
-from clever_lama.config import settings
+from config import settings
 
 
 class ColoredFormatter(logging.Formatter):

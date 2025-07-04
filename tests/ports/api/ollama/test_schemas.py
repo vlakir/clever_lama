@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from clever_lama.ports.api.ollama.schemas import (
+from ports.api.ollama.schemas import (
     OllamaGenerateRequest,
     OllamaChatRequest,
     OllamaShowRequest,
@@ -17,7 +17,7 @@ from clever_lama.ports.api.ollama.schemas import (
     OllamaVersionResponse,
     OllamaErrorResponse,
 )
-from clever_lama.models.ollama import OllamaMessage, OllamaModel, OllamaModelDetails, OllamaOptions
+from models.ollama import OllamaMessage, OllamaModel, OllamaModelDetails, OllamaOptions
 
 
 class TestOllamaGenerateRequest:

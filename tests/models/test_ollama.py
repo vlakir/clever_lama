@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from clever_lama.models.ollama import (
+from models.ollama import (
     OllamaMessage,
     OllamaOptions,
     OllamaModelDetails,
@@ -16,7 +16,7 @@ class TestOllamaMessage:
 
     def test_valid_message_creation(self):
         """Test creating a valid OllamaMessage."""
-         
+
         message = OllamaMessage(role="user", content="Hello, world!")
 
         

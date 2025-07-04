@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from fastapi.exceptions import RequestValidationError
 
-from clever_lama.main import (
+from main import (
     app,
     startup_event,
     shutdown_event,
@@ -96,11 +96,11 @@ class TestStartupEvent:
     """Test cases for startup_event function."""
 
     @pytest.mark.asyncio
-    @patch('clever_lama.main.client_holder')
-    @patch('clever_lama.main.FastAPICache')
-    @patch('clever_lama.main.gateway')
-    @patch('clever_lama.main.settings')
-    @patch('clever_lama.main.asyncio.sleep')
+    @patch('main.client_holder')
+    @patch('main.FastAPICache')
+    @patch('main.gateway')
+    @patch('main.settings')
+    @patch('main.asyncio.sleep')
     async def test_startup_event_success(self, mock_sleep, mock_settings, mock_gateway, mock_cache, mock_client_holder):
         """Test successful startup event."""
         
@@ -119,11 +119,11 @@ class TestStartupEvent:
         mock_gateway.health_check_external_api.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch('clever_lama.main.client_holder')
-    @patch('clever_lama.main.FastAPICache')
-    @patch('clever_lama.main.gateway')
-    @patch('clever_lama.main.settings')
-    @patch('clever_lama.main.shutdown_event')
+    @patch('main.client_holder')
+    @patch('main.FastAPICache')
+    @patch('main.gateway')
+    @patch('main.settings')
+    @patch('main.shutdown_event')
     async def test_startup_event_exception(self, mock_shutdown, mock_settings, mock_gateway, mock_cache, mock_client_holder):
         """Test startup event with exception."""
         
@@ -144,7 +144,7 @@ class TestShutdownEvent:
     """Test cases for shutdown_event function."""
 
     @pytest.mark.asyncio
-    @patch('clever_lama.main.client_holder')
+    @patch('main.client_holder')
     async def test_shutdown_event_with_client(self, mock_client_holder):
         """Test shutdown event with existing client."""
         
@@ -158,7 +158,7 @@ class TestShutdownEvent:
         mock_client.aclose.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch('clever_lama.main.client_holder')
+    @patch('main.client_holder')
     async def test_shutdown_event_without_client(self, mock_client_holder):
         """Test shutdown event without client."""
         
@@ -172,8 +172,8 @@ class TestLifespan:
     """Test cases for lifespan context manager."""
 
     @pytest.mark.asyncio
-    @patch('clever_lama.main.startup_event')
-    @patch('clever_lama.main.shutdown_event')
+    @patch('main.startup_event')
+    @patch('main.shutdown_event')
     async def test_lifespan_success(self, mock_shutdown, mock_startup):
         """Test successful lifespan context manager."""
         
@@ -190,8 +190,8 @@ class TestLifespan:
         mock_shutdown.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch('clever_lama.main.startup_event')
-    @patch('clever_lama.main.shutdown_event')
+    @patch('main.startup_event')
+    @patch('main.shutdown_event')
     async def test_lifespan_startup_exception(self, mock_shutdown, mock_startup):
         """Test lifespan with startup exception."""
         
@@ -308,8 +308,8 @@ class TestAppIntegration:
         """Create test client."""
         return TestClient(app)
 
-    @patch('clever_lama.main.startup_event')
-    @patch('clever_lama.main.shutdown_event')
+    @patch('main.startup_event')
+    @patch('main.shutdown_event')
     def test_health_endpoint(self, mock_shutdown, mock_startup, client):
         """Test health check endpoint."""
         
@@ -325,8 +325,8 @@ class TestAppIntegration:
         assert data["status"] == "ok"
         assert "Ollama is running" in data["message"]
 
-    @patch('clever_lama.main.startup_event')
-    @patch('clever_lama.main.shutdown_event')
+    @patch('main.startup_event')
+    @patch('main.shutdown_event')
     def test_version_endpoint(self, mock_shutdown, mock_startup, client):
         """Test version endpoint."""
         
@@ -341,8 +341,8 @@ class TestAppIntegration:
         data = response.json()
         assert "version" in data
 
-    @patch('clever_lama.main.startup_event')
-    @patch('clever_lama.main.shutdown_event')
+    @patch('main.startup_event')
+    @patch('main.shutdown_event')
     def test_cors_headers(self, mock_shutdown, mock_startup, client):
         """Test CORS headers are present."""
         
@@ -355,8 +355,8 @@ class TestAppIntegration:
         
         assert "access-control-allow-origin" in response.headers
 
-    @patch('clever_lama.main.startup_event')
-    @patch('clever_lama.main.shutdown_event')
+    @patch('main.startup_event')
+    @patch('main.shutdown_event')
     def test_ollama_headers_middleware(self, mock_shutdown, mock_startup, client):
         """Test Ollama headers middleware."""
         
@@ -371,8 +371,8 @@ class TestAppIntegration:
         assert "content-type" in response.headers
         assert "x-process-time" in response.headers
 
-    @patch('clever_lama.main.startup_event')
-    @patch('clever_lama.main.shutdown_event')
+    @patch('main.startup_event')
+    @patch('main.shutdown_event')
     def test_validation_error_handling(self, mock_shutdown, mock_startup, client):
         """Test validation error handling."""
         

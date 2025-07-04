@@ -1,11 +1,10 @@
 """Tests for the OpenAIGateway class."""
 
-import json
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 import httpx
 
-from clever_lama.ports.spi.openai.gateway import OpenAIGateway, HTTPClientHolder, client_holder
+from ports.spi.openai.gateway import OpenAIGateway, HTTPClientHolder, client_holder
 
 
 class TestHTTPClientHolder:
@@ -91,7 +90,7 @@ class TestOpenAIGateway:
         
         client_holder.client = None
 
-         
+
         with pytest.raises(ConnectionAbortedError):
             await gateway.health_check_external_api()
 

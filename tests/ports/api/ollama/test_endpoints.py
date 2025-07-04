@@ -1,16 +1,14 @@
 """Tests for the Ollama API endpoints."""
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from fastapi import HTTPException
-from fastapi.testclient import TestClient
 from fastapi.responses import StreamingResponse
 from pydantic import ValidationError
 
-from clever_lama.ports.api.ollama.endpoints import (
+from ports.api.ollama.endpoints import (
     health_check,
     get_version,
-    tags,
     show,
     pull_model,
     generate,
@@ -19,13 +17,13 @@ from clever_lama.ports.api.ollama.endpoints import (
     ollama_router,
     root_router
 )
-from clever_lama.ports.api.ollama.schemas import (
+from ports.api.ollama.schemas import (
     OllamaChatRequest,
     OllamaGenerateRequest,
     OllamaShowRequest,
     OllamaPullRequest,
 )
-from clever_lama.models.ollama import OllamaMessage, OllamaModel
+from models.ollama import OllamaMessage, OllamaModel
 
 
 class TestHealthCheck:
@@ -115,8 +113,8 @@ class TestTagsEndpoint:
     async def test_tags_success(self, mock_service):
         """Test tags endpoint with successful response."""
         
-        from clever_lama.models.ollama import OllamaModelDetails
-        from clever_lama.ports.api.ollama.schemas import OllamaModelsResponse
+        from models.ollama import OllamaModelDetails
+        from ports.api.ollama.schemas import OllamaModelsResponse
 
         details = OllamaModelDetails()
         mock_models = [
@@ -153,7 +151,7 @@ class TestTagsEndpoint:
     async def test_tags_empty_models(self, mock_service):
         """Test tags endpoint with empty models list."""
         
-        from clever_lama.ports.api.ollama.schemas import OllamaModelsResponse
+        from ports.api.ollama.schemas import OllamaModelsResponse
 
         mock_service.get_models.return_value = []
 
@@ -168,7 +166,7 @@ class TestTagsEndpoint:
     async def test_tags_none_models(self, mock_service):
         """Test tags endpoint with None models."""
         
-        from clever_lama.ports.api.ollama.schemas import OllamaModelsResponse
+        from ports.api.ollama.schemas import OllamaModelsResponse
 
         mock_service.get_models.return_value = None
 

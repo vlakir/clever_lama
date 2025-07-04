@@ -1,6 +1,6 @@
 # Dockerfile
 ARG PYTHON_VERSION=3.13-slim
-FROM python:${PYTHON_VERSION} as builder
+FROM python:${PYTHON_VERSION} AS builder
 
 # 1. Установка зависимостей с очисткой кеша в одном слое
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -37,4 +37,4 @@ USER appuser
 EXPOSE 11434
 HEALTHCHECK --interval=30s --timeout=10s \
     CMD curl -f http://localhost:11434/ || exit 1
-CMD ["python", "src/clever_lama/main.py"]
+CMD ["python", "src/main.py"]

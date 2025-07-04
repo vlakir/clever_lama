@@ -3,16 +3,16 @@ import time
 from collections.abc import AsyncGenerator
 from typing import Any
 
-from clever_lama.constants import (
+from constants import (
     DEFAULT_MODEL,
     RESPONSE_PREFIX,
 )
-from clever_lama.logger import logger
-from clever_lama.models.ollama import (
+from logger import logger
+from models.ollama import (
     OllamaModel,
     OllamaModelDetails,
 )
-from clever_lama.ports.spi.openai.gateway import OpenAIGateway
+from ports.spi.openai.gateway import OpenAIGateway
 
 fake_model = OllamaModel(
     name='fake_model',

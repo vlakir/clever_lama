@@ -5,7 +5,7 @@
             "name": "Run clever_lama as module",
             "type": "python",
             "request": "launch",
-            "module": "src.clever_lama.main",
+            "module": "src.main",
             "cwd": "${workspaceFolder}"
         }
     ]

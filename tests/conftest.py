@@ -4,10 +4,17 @@ import pytest
 import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
+import os
 
-# Add src directory to Python path for imports
+# Корректно добавляем путь src в начало sys.path
 src_path = Path(__file__).parent.parent / "src"
-sys.path.insert(0, str(src_path))
+src_path_str = str(src_path)
+if src_path_str in sys.path:
+    sys.path.remove(src_path_str)
+sys.path.insert(0, src_path_str)
+
+print("Current working directory:", os.getcwd())
+print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!', sys.path)
 
 
 @pytest.fixture
@@ -70,7 +77,7 @@ def sample_models_response():
             },
             {
                 "id": "gpt-4",
-                "object": "model", 
+                "object": "model",
                 "created": 1687882411,
                 "owned_by": "openai"
             }
@@ -81,14 +88,14 @@ def sample_models_response():
 @pytest.fixture
 def sample_ollama_message():
     """Sample OllamaMessage for testing."""
-    from clever_lama.models.ollama import OllamaMessage
+    from models.ollama import OllamaMessage
     return OllamaMessage(role="user", content="Hello, world!")
 
 
 @pytest.fixture
 def sample_ollama_model():
     """Sample OllamaModel for testing."""
-    from clever_lama.models.ollama import OllamaModel, OllamaModelDetails
+    from models.ollama import OllamaModel, OllamaModelDetails
 
     details = OllamaModelDetails(
         family="llama",
@@ -109,8 +116,8 @@ def sample_ollama_model():
 @pytest.fixture
 def sample_chat_request():
     """Sample chat request for testing."""
-    from clever_lama.ports.api.ollama.schemas import OllamaChatRequest
-    from clever_lama.models.ollama import OllamaMessage
+    from ports.api.ollama.schemas import OllamaChatRequest
+    from models.ollama import OllamaMessage
 
     messages = [
         OllamaMessage(role="user", content="Hello"),
@@ -127,7 +134,7 @@ def sample_chat_request():
 @pytest.fixture
 def sample_generate_request():
     """Sample generate request for testing."""
-    from clever_lama.ports.api.ollama.schemas import OllamaGenerateRequest
+    from ports.api.ollama.schemas import OllamaGenerateRequest
 
     return OllamaGenerateRequest(
         model="llama2:7b",
@@ -140,7 +147,7 @@ def sample_generate_request():
 def reset_client_holder():
     """Reset client holder before each test."""
     try:
-        from clever_lama.ports.spi.openai.gateway import client_holder
+        from ports.spi.openai.gateway import client_holder
         original_client = client_holder.client
         yield
         client_holder.client = original_client
@@ -168,7 +175,6 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "unit: mark test as unit test"
     )
-
 
 # Async test configuration
 # pytest_plugins = ["pytest_asyncio"]  # Commented out - install pytest-asyncio if needed
